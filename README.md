@@ -1,0 +1,2 @@
+# Nuxt Language Negotiation
+
