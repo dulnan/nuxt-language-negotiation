@@ -3,11 +3,12 @@ import { useSSRContext } from 'vue'
 import type { Ref } from 'vue'
 import { useNuxtApp } from 'nuxt/app'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
+import type { PageLanguage } from '#language-negotiation'
 
 /**
  * Return the current language.
  */
-export function useCurrentLanguage(providedEvent?: H3Event): Ref<string> {
+export function useCurrentLanguage(providedEvent?: H3Event): Ref<PageLanguage> {
   if (process.server) {
     const getEvent = (): H3Event | undefined => {
       // Event provided by user.

@@ -7,6 +7,7 @@ import {
   useRuntimeConfig,
 } from 'nuxt/app'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
+import type { PageLanguage } from '#language-negotiation'
 
 export function getLanguageFromPath(path = ''): string | undefined {
   if (!path) {
@@ -23,7 +24,6 @@ export function getLanguageFromPath(path = ''): string | undefined {
  * This allows us to use a single object to store the language.
  */
 export default defineNuxtPlugin((app) => {
-  console.log('DEFINE NUXT PLUGIN')
   const config = useRuntimeConfig()
   const availableLanguages =
     config.public.languageNegotiation.availableLanguages
@@ -51,12 +51,12 @@ export default defineNuxtPlugin((app) => {
   } else {
     // On the client we create the singleton here and inject it.
     // The current language is determined from the provided payload.
-    const language = ref(app.payload[LANGUAGE_CONTEXT_KEY] as string)
+    const language = ref(app.payload[LANGUAGE_CONTEXT_KEY] as PageLanguage)
     app.provide('currentLanguage', language)
   }
 
   // The reactive language singleton.
-  const currentLanguage: Ref<string> = app.$currentLanguage
+  const currentLanguage: Ref<PageLanguage> = app.$currentLanguage
 
   // Add a global route middleware to keep the language in sync when switching
   // routes. In addition, if the target route does not have a language param,
@@ -64,7 +64,7 @@ export default defineNuxtPlugin((app) => {
   addRouteMiddleware(
     'languageContext',
     (to, from) => {
-      const newLanguage = (() => {
+      const newLanguage: PageLanguage | undefined = (() => {
         // Pages can define a fixed language via definePageMeta(). This has the
         // highest priority, so we use this.
         if (to.meta.language) {
