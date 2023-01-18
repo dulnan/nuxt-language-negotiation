@@ -1,9 +1,11 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
+import type { RouteLocation } from 'vue-router'
 import {
   addRouteMiddleware,
   defineNuxtPlugin,
   useRoute,
+  useRouter,
   useRuntimeConfig,
 } from 'nuxt/app'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
@@ -25,6 +27,7 @@ export function getLanguageFromPath(path = ''): string | undefined {
  */
 export default defineNuxtPlugin((app) => {
   const config = useRuntimeConfig()
+  const debug = !!config.public.languageNegotiation.debug
   const availableLanguages =
     config.public.languageNegotiation.availableLanguages
 
@@ -58,6 +61,72 @@ export default defineNuxtPlugin((app) => {
   // The reactive language singleton.
   const currentLanguage: Ref<PageLanguage> = app.$currentLanguage
 
+  const router = useRouter()
+
+  /**
+   * Given a location, translate the path, fullPath and href values if the
+   * route defines translated paths.
+   *
+   * Path translations are defined via the `meta` property of the route. This
+   * can be defined using the `definePageMeta` compiler macro:
+   *
+   * definePageMeta({
+   *   name: 'cart',
+   *   alias: ['/:language/carrello', '/:language/panier', '/:language/warenkorb'],
+   *   languageMapping: {
+   *     it: '/it/carrello',
+   *     fr: '/fr/panier',
+   *     de: '/de/warenkorb',
+   *   },
+   * })
+   *
+   * Due to the nature of this macro the values have to be present as strings.
+   * In addition, both the alias and the languageMapping values must have the
+   * same path, with the languageMapping containing the correct value for the
+   * :language param.
+   */
+  const translateLocation = (location: RouteLocation & { href?: string }) => {
+    // Get the language mapping from the resolved route.
+    // Pages can define a mapping for each language.
+    const languageMapping: Record<PageLanguage, string> = location.meta
+      .languageMapping as any
+    if (!languageMapping) {
+      return
+    }
+
+    // Get the language param, fall back to the current language.
+    // Asssume the input location was `{ name: 'cart' }` without a language
+    // param. Then we assume the current language.
+    const languageParam = location.params.language || currentLanguage.value
+    const targetLanguage: PageLanguage =
+      typeof languageParam === 'string' ? languageParam : languageParam[0]
+
+    // Overwrite the path, fullPath and href values from the language mapping.
+    if (targetLanguage && languageMapping[targetLanguage]) {
+      const resolvedPath = location.path
+      // e.g. /de/warenkorb
+      location.path = languageMapping[targetLanguage]
+      // Replace e.g. /de/cart with /de/warenkorb.
+      location.fullPath = location.fullPath.replace(
+        resolvedPath,
+        languageMapping[targetLanguage],
+      )
+      location.href = location.fullPath
+    }
+  }
+
+  // Overwrite vue-router's resolve method.
+  const originalResolve = router.resolve
+  router.resolve = (to, currentLocation) => {
+    // Here we first let vue-router resolve the location.
+    const result = originalResolve(to, currentLocation)
+
+    // Then translate the paths if applicable.
+    translateLocation(result)
+
+    return result
+  }
+
   // Add a global route middleware to keep the language in sync when switching
   // routes. In addition, if the target route does not have a language param,
   // we set it to the current language.
@@ -84,7 +153,9 @@ export default defineNuxtPlugin((app) => {
       })()
 
       if (newLanguage && newLanguage !== currentLanguage.value) {
-        console.log('Changed language to ' + newLanguage)
+        if (debug) {
+          console.debug('Changed language to ' + newLanguage)
+        }
         currentLanguage.value = newLanguage
       }
 
@@ -92,6 +163,8 @@ export default defineNuxtPlugin((app) => {
       if (!to.params.language) {
         to.params.language = currentLanguage.value
       }
+
+      translateLocation(to)
     },
     { global: true },
   )

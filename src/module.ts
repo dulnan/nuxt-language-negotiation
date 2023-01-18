@@ -1,6 +1,7 @@
-import { fileURLToPath } from 'url'
-import type { NuxtModule } from '@nuxt/schema'
+// @ts-ignore
+import type { PageLanguage } from '#language-negotiation'
 import { defu } from 'defu'
+import { fileURLToPath } from 'url'
 import {
   createResolver,
   defineNuxtModule,
@@ -38,6 +39,7 @@ export default defineNuxtModule({
     }
     nuxt.options.runtimeConfig.public.languageNegotiation = {
       availableLanguages: options.availableLanguages as string[],
+      debug: !!options.debug as boolean,
     }
 
     options.negotiators.forEach((negotiator) => {
@@ -87,6 +89,6 @@ export default defineNuxtModule({
 
 declare module '#app' {
   interface PageMeta {
-    language?: string
+    languageMapping?: Record<string, string>
   }
 }

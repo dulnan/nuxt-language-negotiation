@@ -37,6 +37,11 @@ export type NuxtLanguageNegotiationOptions = {
    * Available negotiators.
    */
   negotiators: LanguageNegotiatorDefinition[]
+
+  /**
+   * Log helpfull debugging messages.
+   */
+  debug?: boolean
 }
 
 export type LanguageLink = {
