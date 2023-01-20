@@ -1,28 +1,26 @@
 import type { H3Event } from 'h3'
 
-export type LanguageNegotiatorContext = {
+export type BuiltInNegotiators =
+  | 'pathPrefix'
+  | 'acceptLanguage'
+  | 'queryString'
+  | 'cookie'
+
+export type Negotiators = BuiltInNegotiators | (string & {})
+
+export type LanguageNegotiatorPublicConfig = {
   availableLanguages: string[]
-  event: H3Event
+  queryStringKeys: string[]
+  debug: boolean
+  prefixMapping: Record<string, string>
+  cookieName: string
+  negotiators: Partial<Record<BuiltInNegotiators, boolean>>
 }
 
 export type LanguageNegotiator = (
-  context: LanguageNegotiatorContext,
-) => string | undefined
-
-export type LanguageNegotiatorOptions = {
-  server?: boolean
-  client?: boolean
-}
-
-export type LanguageNegotiatorSetupContext = {
-  resolve: (v: string) => string
-}
-
-export type LanguageNegotiatorDefinition = {
-  name: string
-  callback: LanguageNegotiator
-  setup?: (ctx: LanguageNegotiatorSetupContext) => void
-}
+  event: H3Event,
+  config: LanguageNegotiatorPublicConfig,
+) => string | undefined | null | void
 
 export type NuxtLanguageNegotiationOptions = {
   /**
@@ -34,9 +32,51 @@ export type NuxtLanguageNegotiationOptions = {
   availableLanguages: string[]
 
   /**
+   * The default language. Must be present in availableLanguages.
+   * This is the language that's being used if no negotiator returned a
+   * language.
+   *
+   * If empty then the first one is used.
+   */
+  defaultLanguage?: string
+
+  /**
    * Available negotiators.
    */
-  negotiators: LanguageNegotiatorDefinition[]
+  negotiators: Negotiators[]
+
+  /**
+   * Provide an object that maps the prefix to a language. If empty, the
+   * provided languages are used as the prefix.
+   *
+   * @example
+   * prefixMapping: {
+   *   '/de': 'de',
+   *   '/gb': 'en',
+   *   '/us': 'en',
+   *   '/fr': 'fr',
+   * }
+   */
+  prefixMapping?: Record<string, string>
+
+  /**
+   * Array of query keys to use for the `queryString` negotiator.
+   *
+   * Useful for server handlers / APIs without a language prefix:
+   * /api/getProduct?id=123&language=en
+   * /api/getProducts?__language_context=de
+   *
+   * @example
+   *  ['language', '__language_context']
+   *
+   * @default ['language']
+   */
+  queryStringKeys?: string[]
+
+  /**
+   * Name of the cookie to store the language in.
+   */
+  cookieName?: string
 
   /**
    * Log helpfull debugging messages.

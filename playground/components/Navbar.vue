@@ -19,8 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useAsyncData } from 'nuxt/app'
-import { useLanguageLinks } from '~/.nuxt/imports'
+import { useLanguageLinks } from '#imports'
 
 const links = useLanguageLinks()
 </script>

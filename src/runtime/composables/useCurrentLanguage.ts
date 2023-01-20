@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
 import { useSSRContext } from 'vue'
 import type { Ref } from 'vue'
-import { useNuxtApp } from 'nuxt/app'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
-import type { PageLanguage } from '#language-negotiation'
+import { useNuxtApp } from '#imports'
+import type { PageLanguage } from '#language-negotiation/language'
 
 /**
  * Return the current language.

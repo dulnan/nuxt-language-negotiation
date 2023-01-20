@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
-import { useNuxtApp, useRuntimeConfig, useRoute } from 'nuxt/app'
+import { useNuxtApp, useRuntimeConfig, useRoute } from '#app'
 import { LanguageLink } from '../types'
 
 let languageLinks: ComputedRef<LanguageLink[]> | undefined
@@ -22,7 +22,6 @@ export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
 
   languageLinks = computed(() => {
     return availableLanguages.map((code) => {
-      console.log(code)
       return {
         code,
         active: code === currentLanguage.value,

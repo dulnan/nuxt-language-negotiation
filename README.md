@@ -72,6 +72,16 @@ pages/
 ```
 
 Internally the module *does not* create a route for each language. This means
-there is a single route for every page in the pages folder.
+there is a single route for every page in the pages folder. That way you can
+continue to use <nuxt-link> und router.push() without having to "translate" the
+route first:
+
+```vue
+<template>
+  <nuxt-link :to="{ name: 'search' }">Search</nuxt-link>
+</template>
+```
+
+When the current language is `de`, the resulting link will be `/de/suche`.
 
 
