@@ -2,7 +2,6 @@ import type { H3Event } from 'h3'
 import { useSSRContext } from 'vue'
 import type { Ref } from 'vue'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
-import { useNuxtApp } from '#imports'
 import type { PageLanguage } from '#language-negotiation/language'
 
 /**

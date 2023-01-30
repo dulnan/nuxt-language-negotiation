@@ -8,6 +8,7 @@ import {
   addImports,
   resolveAlias,
   addPlugin,
+  extendPages,
 } from '@nuxt/kit'
 import {
   BuiltInNegotiators,
@@ -36,7 +37,7 @@ export default defineNuxtModule({
     configKey: 'languageNegotiation',
     version: '1.0.0',
     compatibility: {
-      nuxt: '^3.0.0',
+      nuxt: '^3.1.0',
     },
   },
   defaults: defaultOptions as any,
@@ -89,6 +90,12 @@ export default defineNuxtModule({
       middleware: true,
     })
 
+    // Add the server handler that redirects to the front page with the correct language prefix.
+    addServerHandler({
+      handler: resolve('./runtime/serverHandler/frontRedirect'),
+      middleware: true,
+    })
+
     // Import composables.
     addImports({
       from: resolve('./runtime/composables/useCurrentLanguage'),
@@ -98,6 +105,10 @@ export default defineNuxtModule({
       from: resolve('./runtime/composables/useLanguageLinks'),
       name: 'useLanguageLinks',
     })
+    addImports({
+      from: resolve('./runtime/composables/definePageLanguageLinks'),
+      name: 'definePageLanguageLinks',
+    })
 
     // Add the Nuxt plugin.
     addPlugin(resolve('./runtime/plugins/language'))
@@ -106,6 +117,14 @@ export default defineNuxtModule({
     nuxt.options.alias['#language-negotiation/negotiator'] = resolve(
       'runtime/defineLanguageNegotiator',
     )
+
+    extendPages((pages) => {
+      pages.forEach((page) => {
+        if (page.name && page.name.startsWith('language-')) {
+          page.name = page.name.replace('language-', '')
+        }
+      })
+    })
 
     // Create the type definition for the available languages.
     const template = addTemplate({

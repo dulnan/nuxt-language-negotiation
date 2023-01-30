@@ -46,27 +46,30 @@
     "dist"
   ],
   "dependencies": {
-    "@nuxt/kit": "^3.0.0",
+    "@nuxt/kit": "^3.1.1",
     "accept-language-parser": "^1.5.0"
   },
   "devDependencies": {
     "@nuxt/module-builder": "^0.2.1",
-    "@nuxt/schema": "^3.0.0",
-    "@nuxt/test-utils": "^3.0.0",
+    "@nuxt/schema": "^3.1.1",
+    "@nuxt/test-utils": "^3.1.1",
     "@nuxtjs/eslint-config-typescript": "^12.0.0",
     "@types/accept-language-parser": "^1.5.3",
     "@types/node": "^18.11.18",
-    "@vitest/coverage-c8": "^0.26.2",
-    "@vue/test-utils": "^2.2.6",
-    "eslint": "^8.30.0",
-    "eslint-config-prettier": "^8.5.0",
+    "@vitest/coverage-c8": "^0.28.3",
+    "@vue/test-utils": "^2.2.8",
+    "autoprefixer": "^10.4.13",
+    "eslint": "^8.33.0",
+    "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-vue": "^9.8.0",
-    "happy-dom": "^8.1.1",
-    "nuxt": "^3.0.0",
-    "playwright": "^1.29.1",
-    "prettier": "^2.8.1",
-    "vitepress": "^1.0.0-alpha.33",
-    "vitest": "^0.26.2"
+    "eslint-plugin-vue": "^9.9.0",
+    "happy-dom": "^8.2.0",
+    "nuxt": "^3.1.1",
+    "playwright": "^1.30.0",
+    "postcss": "^8.4.21",
+    "prettier": "^2.8.3",
+    "tailwindcss": "^3.2.4",
+    "vitepress": "^1.0.0-alpha.43",
+    "vitest": "^0.28.3"
   }
 }

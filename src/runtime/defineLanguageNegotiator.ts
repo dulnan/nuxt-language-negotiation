@@ -1,6 +1,5 @@
 import { defineEventHandler } from 'h3'
 import type { LanguageNegotiator } from './types'
-import { useRuntimeConfig } from '#imports'
 
 /**
  * Function to return a language negotiator.

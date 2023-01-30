@@ -1,16 +1,36 @@
 import { ref } from 'vue'
+import type { RouteLocationNormalizedLoaded, RouteLocation } from 'vue-router'
 import type { Ref } from 'vue'
-import type { RouteLocation } from 'vue-router'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
 import type { LanguageNegotiatorPublicConfig } from '../types'
-import {
-  addRouteMiddleware,
-  defineNuxtPlugin,
-  useRoute,
-  useRouter,
-  useRuntimeConfig,
-} from '#imports'
 import type { PageLanguage } from '#language-negotiation/language'
+
+function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
+  const singleLanguage = route.meta.language
+  const languageMapping = route.meta.languageMapping as Record<
+    PageLanguage,
+    string
+  >
+  if (singleLanguage) {
+    if (language !== singleLanguage) {
+      return
+    }
+  }
+
+  if (languageMapping && languageMapping[language]) {
+    return {
+      path: languageMapping[language],
+    }
+  }
+
+  return {
+    name: route.name,
+    params: {
+      ...route.params,
+      language,
+    },
+  }
+}
 
 export function getLanguageFromPath(path = ''): string | undefined {
   if (!path) {
@@ -59,10 +79,66 @@ export default defineNuxtPlugin((app) => {
     app.provide('currentLanguage', language)
   }
 
+  const pageLanguageLinksPath = useState<string>(
+    'pageLanguageLinksPath',
+    () => '',
+  )
+  const pageLanguageLinksLinks = useState<Record<string, string> | null>(
+    'pageLanguageLinksLinks',
+    () => null,
+  )
+
+  app.provide('pageLanguageLinks', {
+    path: pageLanguageLinksPath,
+    links: pageLanguageLinksLinks,
+  })
+
   // The reactive language singleton.
   const currentLanguage: Ref<PageLanguage> = app.$currentLanguage
 
   const router = useRouter()
+  const route = useRoute()
+
+  function getLanguageLinks() {
+    if (
+      pageLanguageLinksPath.value &&
+      pageLanguageLinksPath.value === route.path &&
+      pageLanguageLinksLinks.value
+    ) {
+      return Object.keys(pageLanguageLinksLinks.value).map((code) => {
+        return {
+          code,
+          active: code === currentLanguage.value,
+          to: pageLanguageLinksLinks.value![code],
+        }
+      })
+    }
+    const match = route.matched[0]
+    if (!match) {
+      return []
+    }
+
+    if (!match.path.startsWith('/:language')) {
+      return []
+    }
+    return availableLanguages.map((code) => {
+      return {
+        code,
+        active: code === currentLanguage.value,
+        to: getTo(route, code as PageLanguage),
+      }
+    })
+  }
+
+  const languageLinks = useState('languageLinks', () => {
+    return getLanguageLinks()
+  })
+
+  watch([pageLanguageLinksPath, route], () => {
+    languageLinks.value = getLanguageLinks()
+  })
+
+  app.provide('languageLinks', languageLinks)
 
   /**
    * Given a location, translate the path, fullPath and href values if the
@@ -95,6 +171,11 @@ export default defineNuxtPlugin((app) => {
       return
     }
 
+    const match = location.matched[0]
+    if (match && !match.path.includes(':language')) {
+      return location
+    }
+
     // Get the language param, fall back to the current language.
     // Asssume the input location was `{ name: 'cart' }` without a language
     // param. Then we assume the current language.
@@ -106,12 +187,13 @@ export default defineNuxtPlugin((app) => {
     // Overwrite the path, fullPath and href values from the language mapping.
     if (targetLanguage && languageMapping[targetLanguage]) {
       const resolvedPath = location.path
+      const translatedPath = languageMapping[targetLanguage]
       // e.g. /de/warenkorb
-      location.path = languageMapping[targetLanguage]
+      location.path = translatedPath
       // Replace e.g. /de/cart with /de/warenkorb.
       location.fullPath = location.fullPath.replace(
         resolvedPath,
-        languageMapping[targetLanguage],
+        translatedPath,
       )
       location.href = location.fullPath
     }

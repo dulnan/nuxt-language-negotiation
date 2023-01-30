@@ -37,7 +37,7 @@ export default defineNuxtConfig({
 
     // We use two negotiators: Path prefix takes precedence. In cases where no
     // path prefix is available, we fallback to Accept-Language headers.
-    negotiators: [pathPrefixNegotiator(), acceptLanguageNegotiator()],
+    negotiators: ['pathPrefix', 'acceptLanguage'],
 
     // Write debug messages to the console on client and server.
     debug: true,
