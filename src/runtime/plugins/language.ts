@@ -1,3 +1,4 @@
+import { defineNuxtPlugin } from '#app'
 import { ref } from 'vue'
 import type { RouteLocationNormalizedLoaded, RouteLocation } from 'vue-router'
 import type { Ref } from 'vue'
@@ -39,6 +40,13 @@ export function getLanguageFromPath(path = ''): string | undefined {
 
   const matches = /\/([^/]+)/.exec(path)
   return matches?.[1]
+}
+
+function getDefaultMapped(mapping: Record<string, string>): string {
+  const keys = Object.keys(mapping)
+  if (keys.length) {
+    return mapping[keys[0]]
+  }
 }
 
 /**
@@ -118,6 +126,16 @@ export default defineNuxtPlugin((app) => {
       return []
     }
 
+    if (match.meta.languageMapping) {
+      return Object.keys(match.meta.languageMapping).map((code) => {
+        return {
+          code,
+          active: code === currentLanguage.value,
+          to: match.meta.languageMapping[code],
+        }
+      })
+    }
+
     if (!match.path.startsWith('/:language')) {
       return []
     }
@@ -185,9 +203,14 @@ export default defineNuxtPlugin((app) => {
     ) as PageLanguage
 
     // Overwrite the path, fullPath and href values from the language mapping.
-    if (targetLanguage && languageMapping[targetLanguage]) {
+    if (targetLanguage) {
+      const translatedPath =
+        languageMapping[targetLanguage] || getDefaultMapped(languageMapping)
+      if (!translatedPath) {
+        return
+      }
+
       const resolvedPath = location.path
-      const translatedPath = languageMapping[targetLanguage]
       // e.g. /de/warenkorb
       location.path = translatedPath
       // Replace e.g. /de/cart with /de/warenkorb.
@@ -196,6 +219,7 @@ export default defineNuxtPlugin((app) => {
         translatedPath,
       )
       location.href = location.fullPath
+      location.params.language = getLanguageFromPath(translatedPath)
     }
   }
 
@@ -236,7 +260,7 @@ export default defineNuxtPlugin((app) => {
     'languageContext',
     (to, from) => {
       // @TODO: Provide enabled negotiators and respect provided order.
-      const newLanguage: PageLanguage | undefined = (() => {
+      let newLanguage: PageLanguage | undefined = (() => {
         // Pages can define a fixed language via definePageMeta(). This has the
         // highest priority, so we use this.
         const languageMeta = to.meta.language
@@ -258,6 +282,20 @@ export default defineNuxtPlugin((app) => {
           return languageParam
         }
       })()
+
+      // Make sure the determined new language is actually allowed.
+      if (
+        newLanguage &&
+        to.meta.languageMapping &&
+        !to.meta.languageMapping[newLanguage]
+      ) {
+        // The determined language is not supported by the destination route.
+        // Find a matching language as a fallback.
+        const defaultMapped = getDefaultMapped(to.meta.languageMapping)
+        if (defaultMapped) {
+          newLanguage = getLanguageFromPath(defaultMapped)
+        }
+      }
 
       // Change language if needed.
       if (newLanguage && newLanguage !== currentLanguage.value) {

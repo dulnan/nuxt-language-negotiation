@@ -111,7 +111,7 @@ export default defineNuxtModule({
     })
 
     // Add the Nuxt plugin.
-    addPlugin(resolve('./runtime/plugins/language'))
+    addPlugin(resolve('./runtime/plugins/language'), { append: true })
 
     // Add alias to make it easy to import the defineLanguageNegotiator helper.
     nuxt.options.alias['#language-negotiation/negotiator'] = resolve(
