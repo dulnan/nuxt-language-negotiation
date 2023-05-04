@@ -56,7 +56,10 @@ export default defineNuxtModule({
       debug: !!options.debug as boolean,
       prefixMapping: options.prefixMapping || {},
       cookieName: options.cookieName,
-      negotiators: {},
+      negotiators: {} as Record<Partial<BuiltInNegotiators>, boolean>,
+      defaultLanguage:
+        options.defaultLanguage || options.availableLanguages[0] || '',
+      defaultLanguageNoPrefix: !!options.defaultLanguageNoPrefix,
     }
 
     nuxt.options.build.transpile.push(runtimeDir)
@@ -90,11 +93,13 @@ export default defineNuxtModule({
       middleware: true,
     })
 
-    // Add the server handler that redirects to the front page with the correct language prefix.
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/frontRedirect'),
-      middleware: true,
-    })
+    if (!options.defaultLanguageNoPrefix) {
+      // Add the server handler that redirects to the front page with the correct language prefix.
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/frontRedirect'),
+        middleware: true,
+      })
+    }
 
     // Import composables.
     addImports({

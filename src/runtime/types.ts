@@ -14,7 +14,9 @@ export type LanguageNegotiatorPublicConfig = {
   debug: boolean
   prefixMapping: Record<string, string>
   cookieName: string
-  negotiators: Partial<Record<BuiltInNegotiators, boolean>>
+  negotiators: Record<Partial<BuiltInNegotiators>, boolean>
+  defaultLanguage: string
+  defaultLanguageNoPrefix: boolean
 }
 
 export type LanguageNegotiator = (
@@ -34,11 +36,13 @@ export type NuxtLanguageNegotiationOptions = {
   /**
    * The default language. Must be present in availableLanguages.
    * This is the language that's being used if no negotiator returned a
-   * language.
+   * language, for example if the default language has no prefix.
    *
    * If empty then the first one is used.
    */
   defaultLanguage?: string
+
+  defaultLanguageNoPrefix?: boolean
 
   /**
    * Available negotiators.

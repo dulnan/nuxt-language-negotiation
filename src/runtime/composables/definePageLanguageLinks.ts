@@ -7,6 +7,8 @@ export function definePageLanguageLinks(
 ): void {
   const app = useNuxtApp()
 
+  console.log({ path, links })
+
   app.$pageLanguageLinks.links.value = links
   app.$pageLanguageLinks.path.value = path
 }

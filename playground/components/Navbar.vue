@@ -26,19 +26,19 @@
     </ul>
 
     <h2 class="text-xl font-bold mt-10">Language Links</h2>
-    <ul>
-      <li v-for="(link, i) in languageLinks" :key="i + link.code">
-        <nuxt-link v-slot="{ href, isActive, navigate }" :to="link.to" custom>
-          <a
-            :href="href"
-            class="block py-2 font-bold"
-            :class="{ 'text-blue-700': isActive }"
-            @click="navigate"
-            >{{ href }}</a
-          >
-        </nuxt-link>
-      </li>
-    </ul>
+    <!-- <ul> -->
+    <!--   <li v-for="(link, i) in languageLinks" :key="i + link.code"> -->
+    <!--     <nuxt-link v-slot="{ href, isActive, navigate }" :to="link.to" custom> -->
+    <!--       <a -->
+    <!--         :href="href" -->
+    <!--         class="block py-2 font-bold" -->
+    <!--         :class="{ 'text-blue-700': isActive }" -->
+    <!--         @click="navigate" -->
+    <!--         >{{ href }}</a -->
+    <!--       > -->
+    <!--     </nuxt-link> -->
+    <!--   </li> -->
+    <!-- </ul> -->
   </header>
 </template>
 
@@ -50,7 +50,7 @@ const pages = computed(() => {
     { name: 'search' },
     { name: 'page-with-aliases' },
     { path: '/en/page-1-english' },
-    { path: '/de/page-2-german' },
+    { path: '/page-2-german' },
   ]
 })
 
@@ -58,5 +58,7 @@ const app = useNuxtApp()
 
 const route = useRoute()
 const language = useCurrentLanguage()
-const languageLinks = useLanguageLinks()
+// const languageLinks = useLanguageLinks()
+
+// console.log(languageLinks)
 </script>

@@ -6,7 +6,11 @@ import { LANGUAGE_CONTEXT_KEY } from '../settings'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
 
-function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
+function getTo(
+  route: RouteLocationNormalizedLoaded,
+  language: PageLanguage,
+  config: LanguageNegotiatorPublicConfig,
+) {
   const singleLanguage = route.meta.language
   const languageMapping = route.meta.languageMapping as Record<
     PageLanguage,
@@ -21,6 +25,16 @@ function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
   if (languageMapping && languageMapping[language]) {
     return {
       path: languageMapping[language],
+    }
+  }
+
+  const defaultLanguage = config.defaultLanguage
+  if (language === defaultLanguage && config.defaultLanguageNoPrefix) {
+    return {
+      name: route.name,
+      params: {
+        ...route.params,
+      },
     }
   }
 
@@ -42,7 +56,7 @@ export function getLanguageFromPath(path = ''): string | undefined {
   return matches?.[1]
 }
 
-function getDefaultMapped(mapping: Record<string, string>): string {
+function getDefaultMapped(mapping: Record<string, string>): string | undefined {
   const keys = Object.keys(mapping)
   if (keys.length) {
     return mapping[keys[0]]
@@ -56,7 +70,8 @@ function getDefaultMapped(mapping: Record<string, string>): string {
  */
 export default defineNuxtPlugin({
   enforce: 'pre',
-  setup(app) {
+  setup() {
+    const app = useNuxtApp()
     const config = useRuntimeConfig().public
       .languageNegotiation as LanguageNegotiatorPublicConfig
     const debug = !!config.debug
@@ -90,14 +105,16 @@ export default defineNuxtPlugin({
     } else {
       // On the client we create the singleton here and inject it.
       // The current language is determined from the provided payload.
-      const language = ref(app.payload[LANGUAGE_CONTEXT_KEY] as PageLanguage)
+      const language = ref<PageLanguage>(
+        app.payload[LANGUAGE_CONTEXT_KEY] as PageLanguage,
+      )
       // Happens when on client side without SSR.
       if (!language.value) {
         const routeLanguage = route.params.language
         if (isValidLanguage(routeLanguage)) {
           language.value = routeLanguage
         } else {
-          language.value = availableLanguages[0]
+          language.value = availableLanguages[0] as any
         }
       }
       app.provide('currentLanguage', language)
@@ -118,7 +135,7 @@ export default defineNuxtPlugin({
     })
 
     // The reactive language singleton.
-    const currentLanguage: Ref<PageLanguage> = app.$currentLanguage
+    const currentLanguage: Ref<PageLanguage> = app.$currentLanguage as any
 
     const router = useRouter()
 
@@ -146,7 +163,7 @@ export default defineNuxtPlugin({
           return {
             code,
             active: code === currentLanguage.value,
-            to: match.meta.languageMapping[code],
+            to: (match.meta.languageMapping as Record<string, string>)[code],
           }
         })
       }
@@ -158,7 +175,7 @@ export default defineNuxtPlugin({
         return {
           code,
           active: code === currentLanguage.value,
-          to: getTo(route, code as PageLanguage),
+          to: getTo(route, code as PageLanguage, config),
         }
       })
     }
@@ -196,6 +213,8 @@ export default defineNuxtPlugin({
      * :language param.
      */
     const translateLocation = (location: RouteLocation & { href?: string }) => {
+      console.log(location)
+      // debugger
       // Get the language mapping from the resolved route.
       // Pages can define a mapping for each language.
       const languageMapping: Record<PageLanguage, string> = location.meta
@@ -212,7 +231,13 @@ export default defineNuxtPlugin({
       // Get the language param, fall back to the current language.
       // Asssume the input location was `{ name: 'cart' }` without a language
       // param. Then we assume the current language.
-      const languageParam = location.params.language || currentLanguage.value
+      let languageParam = location.params.language as string
+      if (
+        !languageParam ||
+        !config.availableLanguages.includes(languageParam)
+      ) {
+        languageParam = config.defaultLanguage
+      }
       const targetLanguage: PageLanguage = (
         typeof languageParam === 'string' ? languageParam : languageParam[0]
       ) as PageLanguage
@@ -290,6 +315,10 @@ export default defineNuxtPlugin({
           const languageParam = to.params.language
           if (isValidLanguage(languageParam)) {
             return languageParam
+          }
+
+          if (config.defaultLanguageNoPrefix) {
+            return config.defaultLanguage as PageLanguage
           }
         })()
 

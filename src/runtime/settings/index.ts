@@ -10,4 +10,5 @@ export const defaultOptions: Required<NuxtLanguageNegotiationOptions> = {
   queryStringKeys: ['__language_context'],
   cookieName: '__language_context',
   debug: false,
+  defaultLanguageNoPrefix: false,
 }
