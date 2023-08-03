@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { useSSRContext } from 'vue'
+import { useSSRContext, getCurrentInstance } from 'vue'
 import type { Ref } from 'vue'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
 import type { PageLanguage } from '#language-negotiation/language'
@@ -13,6 +13,10 @@ export function useCurrentLanguage(providedEvent?: H3Event): Ref<PageLanguage> {
       // Event provided by user.
       if (providedEvent) {
         return providedEvent
+      }
+
+      if (!getCurrentInstance()) {
+        return
       }
 
       // SSR context should exist at this point, but TS doesn't know that.
