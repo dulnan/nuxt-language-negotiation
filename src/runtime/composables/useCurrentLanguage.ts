@@ -9,18 +9,16 @@ import type { PageLanguage } from '#language-negotiation/language'
  */
 export function useCurrentLanguage(providedEvent?: H3Event): Ref<PageLanguage> {
   if (process.server) {
+    // Only needed when event is not provided. Has to be outside of the
+    // getEvent method or else the inject() that happens in useSSRContext doesn't work.
+    const ssrContext =
+      !providedEvent && getCurrentInstance() ? useSSRContext() : undefined
     const getEvent = (): H3Event | undefined => {
       // Event provided by user.
       if (providedEvent) {
         return providedEvent
       }
 
-      if (!getCurrentInstance()) {
-        return
-      }
-
-      // SSR context should exist at this point, but TS doesn't know that.
-      const ssrContext = useSSRContext()
       if (ssrContext) {
         return ssrContext.event
       }
