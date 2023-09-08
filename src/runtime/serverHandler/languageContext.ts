@@ -1,5 +1,4 @@
 import { defineEventHandler } from 'h3'
-import { ref } from 'vue'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
 
 /**
@@ -11,5 +10,5 @@ export default defineEventHandler(async (event) => {
   }
 
   const negotiatedLanguage: string = event.context.__negotiated_language || 'de'
-  event.context[LANGUAGE_CONTEXT_KEY] = ref(negotiatedLanguage)
+  event.context[LANGUAGE_CONTEXT_KEY] = negotiatedLanguage
 })

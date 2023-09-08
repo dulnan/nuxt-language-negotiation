@@ -1,37 +1,8 @@
 import { defineNuxtPlugin } from '#app'
-import { ref } from 'vue'
-import type { RouteLocationNormalizedLoaded, RouteLocation } from 'vue-router'
-import type { Ref } from 'vue'
+import type { RouteLocation } from 'vue-router'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
-
-function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
-  const singleLanguage = route.meta.language
-  const languageMapping = route.meta.languageMapping as Record<
-    PageLanguage,
-    string
-  >
-  if (singleLanguage) {
-    if (language !== singleLanguage) {
-      return
-    }
-  }
-
-  if (languageMapping && languageMapping[language]) {
-    return {
-      path: languageMapping[language],
-    }
-  }
-
-  return {
-    name: route.name,
-    params: {
-      ...route.params,
-      language,
-    },
-  }
-}
 
 export function getLanguageFromPath(path = ''): string | undefined {
   if (!path) {
@@ -42,7 +13,7 @@ export function getLanguageFromPath(path = ''): string | undefined {
   return matches?.[1]
 }
 
-function getDefaultMapped(mapping: Record<string, string>): string {
+function getDefaultMapped(mapping: Record<string, string>): string | undefined {
   const keys = Object.keys(mapping)
   if (keys.length) {
     return mapping[keys[0]]
@@ -62,11 +33,17 @@ export default defineNuxtPlugin({
     const debug = !!config.debug
     const availableLanguages = config.availableLanguages
     const route = useRoute()
+    const router = useRouter()
 
     // Check if the given language is valid.
     const isValidLanguage = (v: any): v is PageLanguage => {
       return v && typeof v === 'string' && availableLanguages.includes(v)
     }
+
+    const currentLanguage = useState(
+      'currentLanguage',
+      () => config.availableLanguages[0],
+    )
 
     // On the server the current language is attached to the
     // H3Event's context, so we get it from there.
@@ -74,104 +51,14 @@ export default defineNuxtPlugin({
       const context = app.ssrContext?.event.context
       if (context) {
         const language = context[LANGUAGE_CONTEXT_KEY]
-        if (route.meta.language) {
-          language.value = route.meta.language
+        if (language) {
+          currentLanguage.value = language
         }
-        app.provide('currentLanguage', language)
-      }
-
-      // Listen to the app rendered event that is triggered right after SSR is
-      // finished. This means the entire app is done rendering and the language
-      // can't be changed anymore.
-      app.hook('app:rendered', (ctx) => {
-        // Add the final language to the payload object for the client.
-        app.payload[LANGUAGE_CONTEXT_KEY] = app.$currentLanguage
-      })
-    } else {
-      // On the client we create the singleton here and inject it.
-      // The current language is determined from the provided payload.
-      const language = ref(app.payload[LANGUAGE_CONTEXT_KEY] as PageLanguage)
-      // Happens when on client side without SSR.
-      if (!language.value) {
-        const routeLanguage = route.params.language
-        if (isValidLanguage(routeLanguage)) {
-          language.value = routeLanguage
-        } else {
-          language.value = availableLanguages[0]
+        if (route.meta.language && typeof route.meta.language === 'string') {
+          currentLanguage.value = route.meta.language
         }
       }
-      app.provide('currentLanguage', language)
     }
-
-    const pageLanguageLinksPath = useState<string>(
-      'pageLanguageLinksPath',
-      () => '',
-    )
-    const pageLanguageLinksLinks = useState<Record<string, string> | null>(
-      'pageLanguageLinksLinks',
-      () => null,
-    )
-
-    app.provide('pageLanguageLinks', {
-      path: pageLanguageLinksPath,
-      links: pageLanguageLinksLinks,
-    })
-
-    // The reactive language singleton.
-    const currentLanguage: Ref<PageLanguage> = app.$currentLanguage
-
-    const router = useRouter()
-
-    function getLanguageLinks() {
-      if (
-        pageLanguageLinksPath.value &&
-        pageLanguageLinksPath.value === route.path &&
-        pageLanguageLinksLinks.value
-      ) {
-        return Object.keys(pageLanguageLinksLinks.value).map((code) => {
-          return {
-            code,
-            active: code === currentLanguage.value,
-            to: pageLanguageLinksLinks.value![code],
-          }
-        })
-      }
-      const match = route.matched[0]
-      if (!match) {
-        return []
-      }
-
-      if (match.meta.languageMapping) {
-        return Object.keys(match.meta.languageMapping).map((code) => {
-          return {
-            code,
-            active: code === currentLanguage.value,
-            to: match.meta.languageMapping[code],
-          }
-        })
-      }
-
-      if (!match.path.startsWith('/:language')) {
-        return []
-      }
-      return availableLanguages.map((code) => {
-        return {
-          code,
-          active: code === currentLanguage.value,
-          to: getTo(route, code as PageLanguage),
-        }
-      })
-    }
-
-    const languageLinks = useState('languageLinks', () => {
-      return getLanguageLinks()
-    })
-
-    watch([pageLanguageLinksPath, route], () => {
-      languageLinks.value = getLanguageLinks()
-    })
-
-    app.provide('languageLinks', languageLinks)
 
     /**
      * Given a location, translate the path, fullPath and href values if the
