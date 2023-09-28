@@ -3,15 +3,7 @@ import type { RouteLocation } from 'vue-router'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
-
-export function getLanguageFromPath(path = ''): string | undefined {
-  if (!path) {
-    return
-  }
-
-  const matches = /\/([^/]+)/.exec(path)
-  return matches?.[1]
-}
+import { getLanguageFromPath } from './../helpers'
 
 function getDefaultMapped(mapping: Record<string, string>): string | undefined {
   const keys = Object.keys(mapping)
@@ -40,13 +32,7 @@ export default defineNuxtPlugin({
       return v && typeof v === 'string' && availableLanguages.includes(v)
     }
 
-    const currentLanguage = useState('currentLanguage', () => {
-      const languagePath = getLanguageFromPath(route.fullPath)
-      if (isValidLanguage(languagePath)) {
-        return languagePath
-      }
-      return config.availableLanguages[0]
-    })
+    const currentLanguage = useCurrentLanguage()
 
     // On the server the current language is attached to the
     // H3Event's context, so we get it from there.
