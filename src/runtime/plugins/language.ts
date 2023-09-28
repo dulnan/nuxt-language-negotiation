@@ -40,10 +40,13 @@ export default defineNuxtPlugin({
       return v && typeof v === 'string' && availableLanguages.includes(v)
     }
 
-    const currentLanguage = useState(
-      'currentLanguage',
-      () => config.availableLanguages[0],
-    )
+    const currentLanguage = useState('currentLanguage', () => {
+      const languagePath = getLanguageFromPath(route.fullPath)
+      if (isValidLanguage(languagePath)) {
+        return languagePath
+      }
+      return config.availableLanguages[0]
+    })
 
     // On the server the current language is attached to the
     // H3Event's context, so we get it from there.
