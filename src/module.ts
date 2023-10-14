@@ -163,7 +163,23 @@ declare module '#app' {
   interface PageMeta {
     languageMapping?: Partial<Record<PageLanguage, string>>
   }
-}`
+}
+declare module 'vue-router' {
+  interface RouteLocationNamedRaw {
+    /**
+     * The language code.
+     */
+    language?: PageLanguage
+  }
+
+  interface RouteLocationPathRaw {
+    /**
+     * The language code.
+     */
+    language?: PageLanguage
+  }
+}
+`
       },
     }).dst
 
