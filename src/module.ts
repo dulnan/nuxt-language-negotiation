@@ -37,7 +37,7 @@ export default defineNuxtModule({
     configKey: 'languageNegotiation',
     version: '1.0.0',
     compatibility: {
-      nuxt: '^3.1.0',
+      nuxt: '^3.7.0',
     },
   },
   defaults: defaultOptions as any,
@@ -56,7 +56,10 @@ export default defineNuxtModule({
       debug: !!options.debug as boolean,
       prefixMapping: options.prefixMapping || {},
       cookieName: options.cookieName,
+      defaultLanguageNoPrefix: !!options.defaultLanguageNoPrefix,
       negotiators: {},
+      defaultLanguage: (options.defaultLanguage ||
+        options.availableLanguages[0]) as any,
     }
 
     nuxt.options.build.transpile.push(runtimeDir)
@@ -129,14 +132,23 @@ export default defineNuxtModule({
     // Create the type definition for the available languages.
     const template = addTemplate({
       write: true,
-      filename: 'nuxt-language-negotiation.d.ts',
+      filename: 'nuxt-language-negotiation.ts',
       getContents: () => {
         const languages = options.availableLanguages
           .map((lang) => {
             return `'${lang}'`
           })
           .join(' | ')
-        return `export type PageLanguage = ${languages}`
+        return `
+        export type PageLanguage = ${languages}
+        const VALID_LANGUAGES: PageLanguage[] = ${JSON.stringify(
+          options.availableLanguages,
+        )}
+
+        export function isValidLanguage(language: string): language is PageLanguage {
+          return VALID_LANGUAGES.includes(language as any)
+        }
+        `
       },
     })
     nuxt.options.alias['#language-negotiation/language'] = template.dst

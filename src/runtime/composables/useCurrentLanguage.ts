@@ -1,24 +1,24 @@
-import type { Ref } from 'vue'
-import type { PageLanguage } from '#language-negotiation/language'
-import { getLanguageFromPath } from './../helpers'
+import { useRoute, useRuntimeConfig } from '#app'
+import { computed } from 'vue'
 import type { LanguageNegotiatorPublicConfig } from '../types'
+import { getLanguageFromPath } from './../helpers'
+import { PageLanguage, isValidLanguage } from '#language-negotiation/language'
 
 /**
  * Return the current language.
  */
-export function useCurrentLanguage(): Ref<PageLanguage> {
+export function useCurrentLanguage(): ComputedRef<PageLanguage> {
   const route = useRoute()
   const config = useRuntimeConfig().public
     .languageNegotiation as LanguageNegotiatorPublicConfig
-  const availableLanguages = config.availableLanguages
-  const isValidLanguage = (v: any): v is PageLanguage => {
-    return v && typeof v === 'string' && availableLanguages.includes(v)
-  }
-  return useState('currentLanguage', () => {
+
+  const currentLanguage = computed(() => {
     const languagePath = getLanguageFromPath(route.fullPath)
-    if (isValidLanguage(languagePath)) {
+    if (languagePath && isValidLanguage(languagePath)) {
       return languagePath
     }
-    return config.availableLanguages[0]
+    return config.defaultLanguage
   })
+
+  return currentLanguage
 }

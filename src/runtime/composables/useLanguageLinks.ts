@@ -20,11 +20,13 @@ function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
     }
   }
 
+  const name = (route.name || '').toString().split('___')[0]
+
   return {
-    name: route.name,
+    name: name + '___' + language,
+    language,
     params: {
       ...route.params,
-      language,
     },
   }
 }
@@ -86,9 +88,6 @@ export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
       })
     }
 
-    if (!match.path.startsWith('/:language')) {
-      return []
-    }
     return availableLanguages.map((code) => {
       return {
         code,

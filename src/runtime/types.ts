@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import type { PageLanguage } from '#language-negotiation/language'
 
 export type BuiltInNegotiators =
   | 'pathPrefix'
@@ -9,12 +10,14 @@ export type BuiltInNegotiators =
 export type Negotiators = BuiltInNegotiators | (string & {})
 
 export type LanguageNegotiatorPublicConfig = {
-  availableLanguages: string[]
+  availableLanguages: PageLanguage[]
   queryStringKeys: string[]
   debug: boolean
-  prefixMapping: Record<string, string>
+  prefixMapping: Record<PageLanguage, string>
   cookieName: string
   negotiators: Partial<Record<BuiltInNegotiators, boolean>>
+  defaultLanguageNoPrefix: boolean
+  defaultLanguage: PageLanguage
 }
 
 export type LanguageNegotiator = (
@@ -39,6 +42,11 @@ export type NuxtLanguageNegotiationOptions = {
    * If empty then the first one is used.
    */
   defaultLanguage?: string
+
+  /**
+   * Whether the default language should not use a prefix.
+   */
+  defaultLanguageNoPrefix?: boolean
 
   /**
    * Available negotiators.
