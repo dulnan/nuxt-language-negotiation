@@ -38,10 +38,7 @@ export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
   const config = useRuntimeConfig().public
     .languageNegotiation as LanguageNegotiatorPublicConfig
   const availableLanguages = config.availableLanguages
-  const currentLanguage = useState(
-    'currentLanguage',
-    () => config.availableLanguages[0],
-  )
+  const currentLanguage = useCurrentLanguage()
   const route = useRoute()
 
   const pageLanguageLinksPath = useState<string>(
