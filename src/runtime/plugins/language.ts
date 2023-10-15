@@ -1,7 +1,7 @@
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
+import type { RouteLocationRaw } from 'vue-router'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
-import { RouteLocationRaw } from 'vue-router'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -22,7 +22,7 @@ declare module '#app' {
  */
 export default defineNuxtPlugin({
   enforce: 'pre',
-  setup() {
+  async setup() {
     const config = useRuntimeConfig().public
       .languageNegotiation as LanguageNegotiatorPublicConfig
     const availableLanguages = config.availableLanguages
@@ -79,5 +79,13 @@ export default defineNuxtPlugin({
     router.push = function (v) {
       return originalPush(translateLocation(v))
     }
+
+    // Workaround to resolve the current route using the updated route definitions.
+    // Else calling useRoute() would return the wrong/unmatched route.
+    // See: https://github.com/nuxt/nuxt/issues/23678
+    await router.replace({
+      ...router.resolve(route.path),
+      force: true,
+    })
   },
 })
