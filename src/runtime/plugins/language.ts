@@ -1,5 +1,5 @@
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
-import type { RouteLocationRaw } from 'vue-router'
+import type { RouteLocationRaw, RouteRecordNormalized } from 'vue-router'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
 
@@ -21,7 +21,6 @@ declare module '#app' {
  * This allows us to use a single object to store the language.
  */
 export default defineNuxtPlugin({
-  enforce: 'pre',
   async setup() {
     const config = useRuntimeConfig().public
       .languageNegotiation as LanguageNegotiatorPublicConfig
@@ -29,26 +28,46 @@ export default defineNuxtPlugin({
     const route = useRoute()
     const router = useRouter()
 
-    router.getRoutes().forEach((v) => {
-      if (typeof v.name === 'string') {
-        const name = v.name
-        router.removeRoute(v.name)
-        availableLanguages.forEach((language) => {
-          const mapping = v.meta.languageMapping || {}
-          let path = mapping[language] || `/${language}${v.path}`
-          if (
-            !mapping[language] &&
-            config.defaultLanguageNoPrefix &&
-            language === config.defaultLanguage
-          ) {
-            path = v.path
+    function translateRouteRecord(
+      v: RouteRecordNormalized,
+    ): RouteRecordNormalized[] {
+      return availableLanguages.map((language) => {
+        const name = v.name?.toString() || ''
+        const mapping = v.meta.languageMapping || {}
+        let path = mapping[language] || `/${language}${v.path}`
+        if (
+          !mapping[language] &&
+          config.defaultLanguageNoPrefix &&
+          language === config.defaultLanguage
+        ) {
+          path = v.path
+        }
+
+        const translated = {
+          ...v,
+          name: name + '___' + language,
+          path: path.replace(/\/$/, ''),
+        }
+
+        // Also translate the child routes.
+        translated.children = translated.children.map((child) => {
+          const childName = child.name?.toString() || ''
+          return {
+            ...child,
+            name: childName + '___' + language,
           }
-          router.addRoute({
-            ...v,
-            name: name + '___' + language,
-            path: path.replace(/\/$/, ''),
-          })
         })
+        return translated
+      })
+    }
+
+    router.getRoutes().forEach((v) => {
+      // Ignore routes without a name.
+      if (typeof v.name === 'string') {
+        router.removeRoute(v.name)
+        translateRouteRecord(v).forEach((translatedRecord) =>
+          router.addRoute(translatedRecord),
+        )
       }
     })
 
@@ -84,7 +103,7 @@ export default defineNuxtPlugin({
     // Else calling useRoute() would return the wrong/unmatched route.
     // See: https://github.com/nuxt/nuxt/issues/23678
     await router.replace({
-      ...router.resolve(route.path),
+      path: route.path,
       force: true,
     })
   },
