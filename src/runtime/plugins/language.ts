@@ -77,8 +77,8 @@ export default defineNuxtPlugin({
       if (typeof v === 'object') {
         const translated = { ...v }
         if ('name' in translated) {
-          const name = translated.name as string
-          if (!name.includes('___')) {
+          const name = translated.name?.toString() || ''
+          if (name && !name.includes('___')) {
             translated.name = name + '___' + currentLanguage.value
           }
         }
@@ -97,6 +97,12 @@ export default defineNuxtPlugin({
     const originalPush = router.push
     router.push = function (v) {
       return originalPush(translateLocation(v))
+    }
+
+    // Overwrite the router.replace method.
+    const originalReplace = router.replace
+    router.replace = function (v) {
+      return originalReplace(translateLocation(v))
     }
 
     // Workaround to resolve the current route using the updated route definitions.
