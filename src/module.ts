@@ -102,6 +102,10 @@ export default defineNuxtModule({
       name: 'useCurrentLanguage',
     })
     addImports({
+      from: resolve('./runtime/composables/useCurrentCountry'),
+      name: 'useCurrentCountry',
+    })
+    addImports({
       from: resolve('./runtime/composables/useLanguageLinks'),
       name: 'useLanguageLinks',
     })

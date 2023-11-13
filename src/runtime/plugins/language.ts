@@ -5,6 +5,23 @@ import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
 import { getLanguageFromPath } from './../helpers'
 
+export function getCountryFromPath(path = ''): string | undefined {
+  if (!path) {
+    return
+  }
+
+  // Get the locale code (e.g. /en-US/) from the path
+  const matches = /\/([^/]+(-[A-Z]{2}?))/.exec(path)
+
+  // remove en- if present
+  const prefix = matches?.[1]
+  if (prefix) {
+    const countryMatches = /[A-Z]{2}$/.exec(prefix)
+    return countryMatches?.[1]
+  }
+  return
+}
+
 function getDefaultMapped(mapping: Record<string, string>): string | undefined {
   const keys = Object.keys(mapping)
   if (keys.length) {
@@ -34,6 +51,11 @@ export default defineNuxtPlugin({
 
     const currentLanguage = useCurrentLanguage()
 
+    const currentCountry = useState(
+      'currentCountry',
+      () => 'US',
+    )
+
     // On the server the current language is attached to the
     // H3Event's context, so we get it from there.
     if (process.server) {
@@ -45,6 +67,10 @@ export default defineNuxtPlugin({
         }
         if (route.meta.language && typeof route.meta.language === 'string') {
           currentLanguage.value = route.meta.language
+        }
+        const country = context[COUNTRY_CONTEXT_KEY]
+        if (country) {
+          currentCountry.value = country
         }
       }
     }
@@ -189,6 +215,10 @@ export default defineNuxtPlugin({
             console.debug('Changed language to ' + newLanguage)
           }
           currentLanguage.value = newLanguage
+        }
+
+        if (to.path) {
+          currentCountry.value = getCountryFromPath(to.path)
         }
 
         const needsLanguageParam = to.matched[0]?.path?.startsWith('/:language')
