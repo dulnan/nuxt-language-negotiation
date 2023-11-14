@@ -1,6 +1,7 @@
 import { defineNuxtPlugin } from '#app'
 import type { RouteLocation } from 'vue-router'
 import { LANGUAGE_CONTEXT_KEY } from '../settings'
+import { COUNTRY_CONTEXT_KEY } from '../settings'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
 import { getLanguageFromPath } from './../helpers'
