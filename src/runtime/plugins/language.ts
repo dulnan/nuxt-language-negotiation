@@ -18,7 +18,7 @@ export function getCountryFromPath(path = ''): string | undefined {
   const prefix = matches?.[1]
   if (prefix) {
     const countryMatches = /[A-Z]{2}$/.exec(prefix)
-    return countryMatches?.[1]
+    return countryMatches?.[0]
   }
   return
 }
