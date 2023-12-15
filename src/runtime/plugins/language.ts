@@ -12,12 +12,12 @@ export function getCountryFromPath(path = ''): string | undefined {
   }
 
   // Get the locale code (e.g. /en-US/) from the path
-  const matches = /\/([^/]+(-[A-Z]{2}?))/.exec(path)
+  const matches = /\/([^/]+(-[a-z]{2}?))/.exec(path.toLowerCase())
 
   // remove en- if present
   const prefix = matches?.[1]
   if (prefix) {
-    const countryMatches = /[A-Z]{2}$/.exec(prefix)
+    const countryMatches = /[a-z]{2}$/.exec(prefix)
     return countryMatches?.[0]
   }
   return
