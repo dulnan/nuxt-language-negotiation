@@ -1,10 +1,9 @@
-import { defineNuxtPlugin } from '#app'
 import type { RouteLocation } from 'vue-router'
-import { LANGUAGE_CONTEXT_KEY } from '../settings'
-import { COUNTRY_CONTEXT_KEY } from '../settings'
+import { LANGUAGE_CONTEXT_KEY, COUNTRY_CONTEXT_KEY } from '../settings'
 import type { LanguageNegotiatorPublicConfig } from '../types'
-import type { PageLanguage } from '#language-negotiation/language'
 import { getLanguageFromPath } from './../helpers'
+import type { PageLanguage } from '#language-negotiation/language'
+import { defineNuxtPlugin } from '#app'
 
 export function getCountryFromPath(path = ''): string | undefined {
   if (!path) {
@@ -12,15 +11,14 @@ export function getCountryFromPath(path = ''): string | undefined {
   }
 
   // Get the locale code (e.g. /en-US/) from the path
-  const matches = /\/([^/]+(-[a-z]{2}?))/.exec(path.toLowerCase())
+  const matches = /\/([^/]+(-[A-Z]{2}?))/.exec(path)
 
   // remove en- if present
   const prefix = matches?.[1]
   if (prefix) {
-    const countryMatches = /[a-z]{2}$/.exec(prefix)
+    const countryMatches = /[A-Z]{2}$/.exec(prefix)
     return countryMatches?.[0]
   }
-  return
 }
 
 function getDefaultMapped(mapping: Record<string, string>): string | undefined {
@@ -52,10 +50,7 @@ export default defineNuxtPlugin({
 
     const currentLanguage = useCurrentLanguage()
 
-    const currentCountry = useState(
-      'currentCountry',
-      () => 'US',
-    )
+    const currentCountry = useState('currentCountry', () => 'US')
 
     // On the server the current language is attached to the
     // H3Event's context, so we get it from there.
@@ -226,7 +221,8 @@ export default defineNuxtPlugin({
 
         // If the destination does not have language param, add it.
         if (needsLanguageParam) {
-          to.params.language = currentLanguage.value
+          to.params.language =
+            currentLanguage.value + '-' + currentCountry.value
         }
 
         translateLocation(to)
