@@ -10,7 +10,7 @@ import {
 /**
  * Return the current language.
  */
-export function useCurrentLanguage(){
+export function useCurrentLanguage() {
   const route = useRoute()
   const config = useRuntimeConfig().public
     .languageNegotiation as LanguageNegotiatorPublicConfig
