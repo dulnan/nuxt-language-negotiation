@@ -10,7 +10,7 @@ import {
   addPlugin,
   extendPages,
 } from '@nuxt/kit'
-import {
+import type {
   BuiltInNegotiators,
   LanguageNegotiatorPublicConfig,
   Negotiators,
@@ -83,6 +83,7 @@ export default defineNuxtModule({
       }
     })
 
+    // @ts-ignore: TODO: How to fix?
     nuxt.options.runtimeConfig.public.languageNegotiation =
       publicConfig as LanguageNegotiatorPublicConfig
 

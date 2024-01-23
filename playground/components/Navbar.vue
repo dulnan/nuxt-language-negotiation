@@ -49,8 +49,8 @@ const pages = computed(() => {
   return [
     { name: 'search' },
     { name: 'page-with-aliases' },
+    { path: '/page-2-german' },
     { path: '/en/page-1-english' },
-    { path: '/de/page-2-german' },
   ]
 })
 
