@@ -6,10 +6,11 @@
 </template>
 
 <script lang="ts" setup>
-import { useRoute } from 'vue-router'
 import { useAsyncData } from '#imports'
 
 const route = useRoute()
+const config = useRuntimeConfig();
+const hasDefaultLanguageNoPrefix = config.public.languageNegotiation.defaultLanguageNoPrefix;
 
 type DynamicPage = {
   title: string
@@ -20,8 +21,8 @@ const dynamicPages: DynamicPage[] = [
   {
     title: 'Page 1',
     languageLinks: {
+      de: hasDefaultLanguageNoPrefix ? '/page-1-german' : '/de/page-1-german',
       en: '/en/page-1-english',
-      de: '/de/page-1-german',
       fr: '/fr/page-1-french',
       it: '/it/page-1-italian',
     },
@@ -29,8 +30,8 @@ const dynamicPages: DynamicPage[] = [
   {
     title: 'Page 2',
     languageLinks: {
+      de: hasDefaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german',
       en: '/en/page-2-english',
-      de: '/de/page-2-german',
       fr: '/fr/page-2-french',
       it: '/it/page-2-italian',
     },
@@ -38,8 +39,8 @@ const dynamicPages: DynamicPage[] = [
   {
     title: 'Page 3',
     languageLinks: {
+      de: hasDefaultLanguageNoPrefix ? '/page-3-german' : '/de/page-3-german',
       en: '/en/page-3-english',
-      de: '/de/page-3-german',
       fr: '/fr/page-3-french',
       it: '/it/page-3-italian',
     },

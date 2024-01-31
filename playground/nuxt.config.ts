@@ -7,6 +7,8 @@ export default defineNuxtConfig({
   languageNegotiation: {
     availableLanguages: ['de', 'en', 'fr', 'it'],
     negotiators: ['pathPrefix', 'acceptLanguage'],
+    debug: true,
+    defaultLanguageNoPrefix: false,
   },
   css: ['~/assets/css/main.css'],
   postcss: {

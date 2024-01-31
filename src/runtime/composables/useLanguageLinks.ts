@@ -1,5 +1,8 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { LanguageLink, LanguageNegotiatorPublicConfig } from '../types'
+import {
+  type LanguageLink,
+  type LanguageNegotiatorPublicConfig,
+} from '../types'
 import type { PageLanguage } from '#language-negotiation/language'
 
 function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
@@ -34,7 +37,7 @@ function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
 /**
  * Return the current language.
  */
-export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
+export function useLanguageLinks() {
   const config = useRuntimeConfig().public
     .languageNegotiation as LanguageNegotiatorPublicConfig
   const availableLanguages = config.availableLanguages
