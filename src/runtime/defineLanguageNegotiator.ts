@@ -1,3 +1,4 @@
+import { useRuntimeConfig } from '#imports'
 import { defineEventHandler } from 'h3'
 import type { LanguageNegotiator } from './types'
 

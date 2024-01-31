@@ -1,4 +1,5 @@
 import { defineEventHandler, sendRedirect } from 'h3'
+import { useRuntimeConfig } from '#imports'
 
 /**
  * Redirect to the correct language prefix of the front page.

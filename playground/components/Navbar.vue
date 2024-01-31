@@ -19,7 +19,7 @@
             class="block py-2 font-bold"
             :class="{ 'text-blue-700': isActive }"
             @click="navigate"
-          >{{ href }}</a
+            >{{ href }}</a
           >
         </nuxt-link>
       </li>
@@ -34,7 +34,7 @@
             class="block py-2 font-bold"
             :class="{ 'text-blue-700': isActive }"
             @click="navigate"
-          >{{ href }}</a
+            >{{ href }}</a
           >
         </nuxt-link>
       </li>
@@ -43,14 +43,26 @@
 </template>
 
 <script lang="ts" setup>
+import {
+  useRuntimeConfig,
+  useNuxtApp,
+  useCurrentLanguage,
+  useLanguageLinks,
+  computed,
+  useRoute,
+} from '#imports'
+
 const config = useRuntimeConfig()
-const hasDefaultLanguageNoPrefix = config.public.languageNegotiation.defaultLanguageNoPrefix
+const hasDefaultLanguageNoPrefix =
+  config.public.languageNegotiation.defaultLanguageNoPrefix
 
 const pages = computed(() => {
   return [
     { name: 'search' },
     { name: 'page-with-aliases' },
-    { path: hasDefaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german' },
+    {
+      path: hasDefaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german',
+    },
     { path: '/en/page-1-english' },
   ]
 })

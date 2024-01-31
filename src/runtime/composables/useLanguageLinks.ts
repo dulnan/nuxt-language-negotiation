@@ -1,8 +1,12 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import { type LanguageNegotiatorPublicConfig } from '../types'
 import {
-  type LanguageLink,
-  type LanguageNegotiatorPublicConfig,
-} from '../types'
+  useRuntimeConfig,
+  useRoute,
+  useCurrentLanguage,
+  useState,
+  computed,
+} from '#imports'
 import type { PageLanguage } from '#language-negotiation/language'
 
 function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {

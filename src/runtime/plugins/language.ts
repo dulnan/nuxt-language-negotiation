@@ -1,6 +1,12 @@
-import { defineNuxtPlugin, useRuntimeConfig } from '#app'
 import type { RouteLocationRaw, RouteRecordNormalized } from 'vue-router'
 import type { LanguageNegotiatorPublicConfig } from '../types'
+import {
+  useRoute,
+  useRouter,
+  defineNuxtPlugin,
+  useRuntimeConfig,
+  useCurrentLanguage,
+} from '#imports'
 import type { PageLanguage } from '#language-negotiation/language'
 
 declare module 'vue-router' {

@@ -6,11 +6,12 @@
 </template>
 
 <script lang="ts" setup>
-import { useAsyncData } from '#imports'
+import { useAsyncData, useRoute, useRuntimeConfig, createError } from '#imports'
 
 const route = useRoute()
-const config = useRuntimeConfig();
-const hasDefaultLanguageNoPrefix = config.public.languageNegotiation.defaultLanguageNoPrefix;
+const config = useRuntimeConfig()
+const hasDefaultLanguageNoPrefix =
+  config.public.languageNegotiation.defaultLanguageNoPrefix
 
 type DynamicPage = {
   title: string

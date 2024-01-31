@@ -1,11 +1,8 @@
-import { useRoute, useRuntimeConfig } from '#app'
 import { computed } from 'vue'
 import type { LanguageNegotiatorPublicConfig } from '../types'
 import { getLanguageFromPath } from './../helpers'
-import {
-  type PageLanguage,
-  isValidLanguage,
-} from '#language-negotiation/language'
+import { useRoute, useRuntimeConfig } from '#imports'
+import { isValidLanguage } from '#language-negotiation/language'
 
 /**
  * Return the current language.
