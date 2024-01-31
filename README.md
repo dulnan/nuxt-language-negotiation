@@ -1,15 +1,14 @@
 # Nuxt Language Negotiation
 
-This module provides basic multi-language support for a Nuxt 3 app. It's
-minimal by design and tries to do one thing only.
-
-I created this module because I mostly work on large CMS powered websites that 
+This module provides basic multi-language support for a Nuxt 3 app. It's minimal
+by design and tries to do one thing only.
 
 ## Features
 
-- SSR language negotiation/detection based on path prefix, `Accept-Language` or custom (e.g. via API).
+- SSR language negotiation/detection based on path prefix, `Accept-Language` or
+  custom (e.g. via API).
 - Single source of truth for "current language" state
-- Multi-language routes (single route for multiple languages with different path per language)
+- Multi-language routes via `languageMapping` meta property
 
 ## What it doesn't do
 
@@ -53,35 +52,21 @@ The module assumes the following:
   - e.g. `/en/search`, `/de/suche`, etc.
 - Routes use a single param for the language prefix
   - e.g. `/:language/product/:id`.
-- Routes without a language prefix are required to specify the language via route.meta
-  - e.g. `/german-landing-page` only available in German, so it defines `de` in route.meta.language.
-- Routes without a language prefix but with a specific path for every language specifiy the mapping via route.meta
+- Routes without a language prefix are required to specify the language via
+  route.meta
+  - e.g. `/german-landing-page` only available in German, so it defines `de` in
+    route.meta.language.
+- Routes without a language prefix but with a specific path for every language
+  specifiy the mapping via route.meta
 
 This means your pages directory should look like this:
 
 ```
 pages/
-  [language]/
+  search.vue
+  products/
+    [id].vue
     index.vue
-    search.vue
-    products/
-      [id].vue
-      index.vue
   landing-page.vue
   index.vue
 ```
-
-Internally the module *does not* create a route for each language. This means
-there is a single route for every page in the pages folder. That way you can
-continue to use <nuxt-link> und router.push() without having to "translate" the
-route first:
-
-```vue
-<template>
-  <nuxt-link :to="{ name: 'search' }">Search</nuxt-link>
-</template>
-```
-
-When the current language is `de`, the resulting link will be `/de/suche`.
-
-
