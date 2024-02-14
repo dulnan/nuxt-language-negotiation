@@ -13,7 +13,7 @@ export function useCurrentLanguage() {
     .languageNegotiation as LanguageNegotiatorPublicConfig
 
   const currentLanguage = computed(() => {
-    const languagePath = getLanguageFromPath(route.fullPath)
+    const languagePath = getLanguageFromPath(route.path)
     if (languagePath && isValidLanguage(languagePath)) {
       return languagePath
     }
