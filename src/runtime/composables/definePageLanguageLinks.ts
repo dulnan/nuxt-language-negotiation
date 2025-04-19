@@ -1,14 +1,24 @@
-import { useState } from '#imports'
+import { useState, useRoute } from '#imports'
+import type { ValidLanguage } from '#nuxt-language-negotiation/config'
 
 /**
- * Return the current language.
+ * Define the language links for the current route.
  */
 export function definePageLanguageLinks(
-  path: string,
-  links: Record<string, string>,
+  links: Record<ValidLanguage, string>,
 ): void {
-  const statePath = useState('pageLanguageLinksPath', () => '')
-  const stateLinks = useState('pageLanguageLinksLinks', () => ({}))
-  statePath.value = path
-  stateLinks.value = links
+  const route = useRoute()
+  const stateLinks = useState<Record<string, Record<ValidLanguage, string>>>(
+    'pageLanguageLinks',
+    () => {
+      return {}
+    },
+  )
+
+  const existing = stateLinks.value[route.path]
+  if (existing) {
+    return
+  }
+
+  stateLinks.value[route.path] = links
 }

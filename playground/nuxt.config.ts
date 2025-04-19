@@ -2,7 +2,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 import NuxtLanguageNegotiation from './../src/module'
 
 export default defineNuxtConfig({
-  modules: [NuxtLanguageNegotiation],
+  modules: [NuxtLanguageNegotiation, '@nuxt/eslint'],
 
   imports: {
     autoImport: false,
@@ -14,11 +14,15 @@ export default defineNuxtConfig({
     debug: true,
     defaultLanguageNoPrefix: false,
   },
+
   css: ['~/assets/css/main.css'],
+
   postcss: {
     plugins: {
       tailwindcss: {},
       autoprefixer: {},
     },
   },
+
+  compatibilityDate: '2025-04-19',
 })

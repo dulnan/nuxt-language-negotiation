@@ -1,25 +1,10 @@
 import type { RouteLocationRaw, RouteRecordNormalized } from 'vue-router'
-import type { LanguageNegotiatorPublicConfig } from '../types'
 import {
   useRoute,
   useRouter,
   defineNuxtPlugin,
-  useRuntimeConfig,
   useCurrentLanguage,
 } from '#imports'
-import type { PageLanguage } from '#language-negotiation/language'
-
-declare module 'vue-router' {
-  interface RouteMeta {
-    languageMapping?: Partial<Record<PageLanguage, string>>
-  }
-}
-
-declare module '#app' {
-  interface PageMeta {
-    languageMapping?: Partial<Record<PageLanguage, string>>
-  }
-}
 
 /**
  * Provides the global language singleton object on the Nuxt app.
@@ -27,9 +12,8 @@ declare module '#app' {
  * This allows us to use a single object to store the language.
  */
 export default defineNuxtPlugin({
+  name: 'nuxt-language-negotiation:init',
   async setup() {
-    const config = useRuntimeConfig().public
-      .languageNegotiation as LanguageNegotiatorPublicConfig
     const availableLanguages = config.availableLanguages
     const route = useRoute()
     const router = useRouter()

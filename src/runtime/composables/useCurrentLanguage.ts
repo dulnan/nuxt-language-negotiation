@@ -1,24 +1,16 @@
-import { computed } from 'vue'
-import type { LanguageNegotiatorPublicConfig } from '../types'
 import { getLanguageFromPath } from './../helpers'
-import { useRoute, useRuntimeConfig } from '#imports'
-import { isValidLanguage } from '#language-negotiation/language'
+import { toValidLanguage } from './../helpers/toValidLanguage'
+import { useRoute, computed, type ComputedRef } from '#imports'
+import type { ValidLanguage } from '#nuxt-language-negotiation/config'
 
 /**
  * Return the current language.
  */
-export function useCurrentLanguage() {
+export function useCurrentLanguage(): ComputedRef<ValidLanguage> {
   const route = useRoute()
-  const config = useRuntimeConfig().public
-    .languageNegotiation as LanguageNegotiatorPublicConfig
 
-  const currentLanguage = computed(() => {
-    const languagePath = getLanguageFromPath(route.path)
-    if (languagePath && isValidLanguage(languagePath)) {
-      return languagePath
-    }
-    return config.defaultLanguage
+  return computed<ValidLanguage>(() => {
+    const language = getLanguageFromPath(route.path)
+    return toValidLanguage(language)
   })
-
-  return currentLanguage
 }

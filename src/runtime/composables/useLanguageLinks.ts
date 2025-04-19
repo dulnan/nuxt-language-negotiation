@@ -1,104 +1,56 @@
-import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { type LanguageNegotiatorPublicConfig } from '../types'
 import {
-  useRuntimeConfig,
   useRoute,
   useCurrentLanguage,
   useState,
   computed,
+  type ComputedRef,
 } from '#imports'
-import type { PageLanguage } from '#language-negotiation/language'
-
-function getTo(route: RouteLocationNormalizedLoaded, language: PageLanguage) {
-  const singleLanguage = route.meta.language
-  const languageMapping = route.meta.languageMapping as Record<
-    PageLanguage,
-    string
-  >
-  if (singleLanguage) {
-    if (language !== singleLanguage) {
-      return
-    }
-  }
-
-  if (languageMapping && languageMapping[language]) {
-    return {
-      path: languageMapping[language],
-    }
-  }
-
-  const name = (route.name || '').toString().split('___')[0]
-
-  return {
-    name: name + '___' + language,
-    language,
-    params: {
-      ...route.params,
-    },
-  }
-}
+import {
+  type ValidLanguage,
+  type LanguageLink,
+  languages,
+} from '#nuxt-language-negotiation/config'
 
 /**
  * Return the current language.
  */
-export function useLanguageLinks() {
-  const config = useRuntimeConfig().public
-    .languageNegotiation as LanguageNegotiatorPublicConfig
-  const availableLanguages = config.availableLanguages
+export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
+  const stateLinks = useState<Record<string, Record<ValidLanguage, string>>>(
+    'pageLanguageLinks',
+    () => {
+      return {}
+    },
+  )
+
   const currentLanguage = useCurrentLanguage()
   const route = useRoute()
 
-  const pageLanguageLinksPath = useState<string>(
-    'pageLanguageLinksPath',
-    () => '',
-  )
-  const pageLanguageLinksLinks = useState<Record<string, string> | null>(
-    'pageLanguageLinksLinks',
-    () => null,
-  )
-
-  const links = computed(() => {
-    if (
-      pageLanguageLinksPath.value &&
-      pageLanguageLinksPath.value === route.path &&
-      pageLanguageLinksLinks.value
-    ) {
-      return Object.keys(pageLanguageLinksLinks.value).map((code) => {
-        return {
-          code,
-          active: code === currentLanguage.value,
-          to: pageLanguageLinksLinks.value![code],
-        }
-      })
-    }
-    const match = route.matched[0]
-    if (!match) {
-      return []
-    }
-
-    const matchLanguageMapping: Record<string, string> | unknown =
-      match.meta.languageMapping
-    if (
-      match.meta.languageMapping &&
-      typeof matchLanguageMapping === 'object' &&
-      matchLanguageMapping !== null
-    ) {
-      return Object.entries(match.meta.languageMapping).map(([code, to]) => {
-        return {
-          code,
-          active: code === currentLanguage.value,
-          to,
-        }
-      })
-    }
-
-    return availableLanguages.map((code) => {
-      return {
-        code,
-        active: code === currentLanguage.value,
-        to: getTo(route, code as PageLanguage),
-      }
-    })
+  const mapping = computed<Record<ValidLanguage, string> | null>(() => {
+    return stateLinks.value[route.path] || route.meta.languageMapping || null
   })
-  return links
+
+  return computed<LanguageLink[]>(() => {
+    if (mapping.value) {
+      return languages.map((code) => {
+        const to = mapping.value?.[code]
+        if (to) {
+          return {
+            code,
+            enabled: true,
+            to,
+            active: code === currentLanguage.value,
+          }
+        }
+
+        return {
+          code,
+          enabled: false,
+          to: undefined,
+          active: code === currentLanguage.value,
+        }
+      })
+    }
+
+    return []
+  })
 }

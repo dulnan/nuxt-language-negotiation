@@ -2,16 +2,7 @@
   "name": "nuxt-language-negotiation",
   "version": "1.0.1",
   "description": "Simple language negotiation for Nuxt 3.",
-  "type": "module",
   "repository": "github:dulnan/nuxt-language-negotiation",
-  "exports": {
-    ".": {
-      "import": "./dist/module.mjs",
-      "require": "./dist/module.cjs"
-    }
-  },
-  "main": "./dist/module.cjs",
-  "types": "./dist/types.d.ts",
   "keywords": [
     "nuxt",
     "language",
@@ -25,12 +16,34 @@
     "url": "https://dulnan.net",
     "email": "me@dulnan.net"
   },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    },
+    "./server-options": "./dist/server-options.mjs"
+  },
+  "main": "./dist/module.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "server-options": [
+        "./dist/server-options.d.mts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prepack": "nuxt-module-build",
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
-    "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
+    "dev:prepare": "PLAYGROUND_MODULE_BUILD=true nuxt-module-build build --stub && PLAYGROUND_MODULE_BUILD=true nuxt-module-build prepare && nuxi prepare playground",
     "generate": "nuxi generate",
     "typecheck": "nuxi typecheck",
     "docs:dev": "vitepress dev docs --port 5000",
@@ -43,33 +56,28 @@
     "test:ci": "TZ=utc vitest run",
     "test:coverage": "TZ=utc vitest run --coverage"
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
-    "@nuxt/kit": "^3.9.3",
     "accept-language-parser": "^1.5.0"
   },
   "devDependencies": {
-    "@nuxt/module-builder": "^0.5.5",
-    "@nuxt/schema": "^3.9.3",
+    "@nuxt/eslint": "^1.3.0",
+    "@nuxt/kit": "^3.16.2",
+    "@nuxt/module-builder": "^1.0.1",
+    "@nuxt/schema": "^3.16.2",
     "@nuxt/test-utils": "^3.10.0",
-    "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@types/accept-language-parser": "^1.5.6",
     "@types/node": "^20.11.5",
-    "@vitest/coverage-v8": "^1.2.1",
     "@vitest/coverage-c8": "^0.28.3",
+    "@vitest/coverage-v8": "^1.2.1",
     "@vue/test-utils": "^2.4.3",
     "autoprefixer": "^10.4.17",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "eslint-plugin-vue": "^9.20.1",
+    "eslint": "^9.25.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.2.6",
     "happy-dom": "~13.2",
-    "nuxt": "^3.9.3",
+    "nuxt": "^3.16.2",
     "playwright": "^1.41.1",
     "postcss": "^8.4.33",
-    "prettier": "^3.2.4",
     "tailwindcss": "^3.4.1",
     "vitepress": "^1.0.0-rc.40",
     "vitest": "~1.2"

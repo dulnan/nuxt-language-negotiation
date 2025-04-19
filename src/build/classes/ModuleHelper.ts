@@ -1,0 +1,285 @@
+import {
+  addImports,
+  addPlugin,
+  addServerHandler,
+  addServerImports,
+  addTemplate,
+  addTypeTemplate,
+  createResolver,
+  type Resolver,
+} from '@nuxt/kit'
+import { relative } from 'pathe'
+import type { Nuxt, ResolvedNuxtTemplate } from 'nuxt/schema'
+import type { ModuleOptions } from './../types'
+import { defu } from 'defu'
+import {
+  defaultOptions,
+  fileExists,
+  logger,
+  validateOptions,
+} from './../helpers'
+import type { ModuleTemplate } from './../templates/defineTemplate'
+
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
+
+type RequiredModuleOptions = WithRequired<
+  ModuleOptions,
+  keyof typeof defaultOptions
+>
+
+type ModuleHelperResolvers = {
+  /**
+   * Resolver for paths relative to the module root.
+   */
+  module: Resolver
+
+  /**
+   * Resolve relative to the app's server directory.
+   */
+  server: Resolver
+
+  /**
+   * Resolve relative to the Nuxt src folder.
+   */
+  src: Resolver
+
+  /**
+   * Resolve relative to the Nuxt app directory.
+   */
+  app: Resolver
+
+  /**
+   * Resolve relative to the Nuxt root.
+   *
+   * Should be where nuxt.config.ts is located.
+   */
+  root: Resolver
+
+  /**
+   * Resolve relative to the workspace root.
+   */
+  workspace: Resolver
+}
+
+type ModuleHelperPaths = {
+  runtimeTypes: string
+  root: string
+  nuxtConfig: string
+  serverDir: string
+  serverOptions: string | null
+  moduleBuildDir: string
+}
+
+export class ModuleHelper {
+  public readonly resolvers: ModuleHelperResolvers
+  public readonly paths: ModuleHelperPaths
+
+  public readonly isDev: boolean
+
+  public readonly options: RequiredModuleOptions
+
+  private nitroExternals: string[] = []
+  private tsPaths: Record<string, string> = {}
+
+  constructor(
+    public nuxt: Nuxt,
+    moduleUrl: string,
+    options: ModuleOptions,
+  ) {
+    const isModuleBuild =
+      process.env.PLAYGROUND_MODULE_BUILD === 'true' && nuxt.options._prepare
+
+    const mergedOptions = defu({}, options, defaultOptions)
+    // When running dev:prepare during module development we have to "fake"
+    // options to use the playground.
+    if (isModuleBuild) {
+      mergedOptions.availableLanguages = ['de', 'en', 'fr', 'it']
+    }
+
+    // Resolver for the root directory.
+    const srcResolver = createResolver(nuxt.options.srcDir)
+    const rootResolver = createResolver(nuxt.options.rootDir)
+
+    this.options = mergedOptions as RequiredModuleOptions
+
+    // Will throw an error if the options are not valid.
+    if (!nuxt.options._prepare) {
+      validateOptions(this.options)
+    }
+
+    this.isDev = nuxt.options.dev
+    this.resolvers = {
+      module: createResolver(moduleUrl),
+      server: createResolver(nuxt.options.serverDir),
+      src: srcResolver,
+      app: createResolver(nuxt.options.dir.app),
+      root: rootResolver,
+      workspace: createResolver(nuxt.options.workspaceDir),
+    }
+
+    this.paths = {
+      runtimeTypes: '',
+      root: nuxt.options.rootDir,
+      nuxtConfig: this.resolvers.root.resolve('nuxt.config.ts'),
+      serverDir: nuxt.options.serverDir,
+      serverOptions: '',
+      moduleBuildDir: nuxt.options.buildDir + '/nuxt-language-negotiation',
+    }
+
+    // This path needs to be built afterwards since the method we call
+    // depends on a value of this.paths.
+    this.paths.runtimeTypes = this.toModuleBuildRelative(
+      this.resolvers.module.resolve('./runtime/types/index'),
+    )
+
+    this.paths.serverOptions = this.findServerOptions()
+  }
+
+  /**
+   * Find the path to the languageNegotiation.serverOptions.ts file.
+   */
+  private findServerOptions(): string | null {
+    // Look for the file in the server directory.
+    const newPath = this.resolvers.server.resolve(
+      'languageNegotiation.serverOptions',
+    )
+    const serverPath = fileExists(newPath)
+
+    if (serverPath) {
+      return serverPath
+    }
+
+    logger.info('No languageNegotiation.serverOptions file found.')
+    return null
+  }
+
+  /**
+   * Transform the path relative to the module's build directory.
+   *
+   * @param path - The absolute path.
+   *
+   * @returns The path relative to the module's build directory.
+   */
+  public toModuleBuildRelative(path: string): string {
+    return relative(this.paths.moduleBuildDir, path)
+  }
+
+  /**
+   * Transform the path relative to the Nuxt build directory.
+   *
+   * @param path - The absolute path.
+   *
+   * @returns The path relative to the module's build directory.
+   */
+  public toBuildRelative(path: string): string {
+    return relative(this.nuxt.options.buildDir, path)
+  }
+
+  public addAlias(name: string, path: string) {
+    this.nuxt.options.alias[name] = path
+
+    // In our case, the name of the alias corresponds to a folder in the build
+    // dir with the same name (minus the #).
+    const pathFromName = `./${name.substring(1)}`
+
+    this.tsPaths[name] = pathFromName
+    this.tsPaths[name + '/*'] = pathFromName + '/*'
+
+    // Add the alias as an external so that the nitro server build doesn't fail.
+    this.inlineNitroExternals(name)
+  }
+
+  public inlineNitroExternals(arg: ResolvedNuxtTemplate | string) {
+    const path = typeof arg === 'string' ? arg : arg.dst
+    this.nitroExternals.push(path)
+    this.transpile(path)
+  }
+
+  public transpile(path: string) {
+    this.nuxt.options.build.transpile.push(path)
+  }
+
+  public applyBuildConfig() {
+    // Workaround for https://github.com/nuxt/nuxt/issues/28995
+    this.nuxt.options.nitro.externals ||= {}
+    this.nuxt.options.nitro.externals.inline ||= []
+    this.nuxt.options.nitro.externals.inline.push(...this.nitroExternals)
+
+    // Currently needed due to a bug in Nuxt that does not add aliases for
+    // nitro. As this has happened before in the past, let's leave it so that
+    // we are guaranteed to have these aliases also for server types.
+    this.nuxt.options.nitro.typescript ||= {}
+    this.nuxt.options.nitro.typescript.tsConfig ||= {}
+    this.nuxt.options.nitro.typescript.tsConfig.compilerOptions ||= {}
+    this.nuxt.options.nitro.typescript.tsConfig.compilerOptions.paths ||= {}
+
+    this.nuxt.options.typescript.tsConfig ||= {}
+    this.nuxt.options.typescript.tsConfig.compilerOptions ||= {}
+    this.nuxt.options.typescript.tsConfig.compilerOptions.paths ||= {}
+
+    for (const [name, path] of Object.entries(this.tsPaths)) {
+      this.nuxt.options.nitro.typescript.tsConfig.compilerOptions.paths[name] =
+        [path]
+      this.nuxt.options.typescript.tsConfig.compilerOptions.paths[name] = [path]
+    }
+  }
+
+  public addTemplate(template: ModuleTemplate) {
+    if (template.build) {
+      const content = template.build(this)
+      addTemplate({
+        filename: 'nuxt-language-negotiation/' + template.options.name + '.js',
+        write: true,
+        getContents: () => content,
+      })
+    }
+
+    if (template.buildTypes) {
+      const content = template.buildTypes(this)
+      const filename =
+        `nuxt-language-negotiation/${template.options.name}.d.ts` as `${string}.d.ts`
+      addTypeTemplate(
+        {
+          filename,
+          write: true,
+          getContents: () => content,
+        },
+        {
+          nuxt: true,
+          nitro: template.options.serverTypes,
+        },
+      )
+    }
+  }
+
+  public addPlugin(name: string) {
+    addPlugin(this.resolvers.module.resolve('./runtime/plugins/' + name), {
+      append: false,
+    })
+  }
+
+  public addServerMiddleware(name: string) {
+    addServerHandler({
+      handler: this.resolvers.module.resolve(
+        './runtime/server/middleware/' + name,
+      ),
+      middleware: true,
+    })
+  }
+
+  public addComposable(name: string) {
+    addImports({
+      from: this.resolvers.module.resolve('./runtime/composables/' + name),
+      name,
+    })
+  }
+
+  public addServerUtil(name: string) {
+    addServerImports([
+      {
+        from: this.resolvers.module.resolve('./runtime/server/utils/' + name),
+        name,
+      },
+    ])
+  }
+}

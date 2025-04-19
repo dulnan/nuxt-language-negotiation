@@ -23,9 +23,9 @@ export type LanguageNegotiatorPublicConfig = {
 export type LanguageNegotiator = (
   event: H3Event,
   config: LanguageNegotiatorPublicConfig,
-) => string | undefined | null | void
+) => string | undefined | null
 
-export type NuxtLanguageNegotiationOptions = {
+export type ModuleOptions = {
   /**
    * Define the available languages.
    *
