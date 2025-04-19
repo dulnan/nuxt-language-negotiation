@@ -1,5 +1,5 @@
-import { getLanguageFromPath } from './../helpers'
-import { toValidLanguage } from './../helpers/toValidLanguage'
+import { getLanguageFromPath } from './../../helpers'
+import { toValidLanguage } from './../../helpers/toValidLanguage'
 import { useRoute, computed, type ComputedRef, useRequestEvent } from '#imports'
 import type { ValidLanguage } from '#nuxt-language-negotiation/config'
 

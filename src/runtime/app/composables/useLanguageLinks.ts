@@ -25,9 +25,11 @@ export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
   const currentLanguage = useCurrentLanguage()
   const route = useRoute()
 
-  const mapping = computed<Record<ValidLanguage, string> | null>(() => {
-    return stateLinks.value[route.path] || route.meta.languageMapping || null
-  })
+  const mapping = computed<Partial<Record<ValidLanguage, string>> | null>(
+    () => {
+      return stateLinks.value[route.path] || route.meta.languageMapping || null
+    },
+  )
 
   return computed<LanguageLink[]>(() => {
     if (mapping.value) {

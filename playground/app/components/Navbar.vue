@@ -43,25 +43,14 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  useRuntimeConfig,
-  useNuxtApp,
-  useCurrentLanguage,
-  useLanguageLinks,
-  computed,
-  useRoute,
-} from '#imports'
-
-const config = useRuntimeConfig()
-const hasDefaultLanguageNoPrefix =
-  config.public.languageNegotiation.defaultLanguageNoPrefix
+import { defaultLanguageNoPrefix } from '#nuxt-language-negotiation/config'
 
 const pages = computed(() => {
   return [
     { name: 'search' },
     { name: 'page-with-aliases' },
     {
-      path: hasDefaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german',
+      path: defaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german',
     },
     { path: '/en/page-1-english' },
   ]

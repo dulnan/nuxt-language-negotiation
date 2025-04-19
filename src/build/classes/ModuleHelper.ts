@@ -261,7 +261,7 @@ export class ModuleHelper {
   }
 
   public addPlugin(name: string) {
-    addPlugin(this.resolvers.module.resolve('./runtime/plugins/' + name), {
+    addPlugin(this.resolvers.module.resolve('./runtime/app/plugins/' + name), {
       append: false,
     })
   }
@@ -277,7 +277,7 @@ export class ModuleHelper {
 
   public addComposable(name: string) {
     addImports({
-      from: this.resolvers.module.resolve('./runtime/composables/' + name),
+      from: this.resolvers.module.resolve('./runtime/app/composables/' + name),
       name,
     })
   }

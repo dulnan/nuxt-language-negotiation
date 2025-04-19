@@ -1,5 +1,5 @@
 import { defineNuxtPlugin } from '#imports'
-import { useCurrentLanguage as useCurrentLanguageServer } from './../server/utils/useCurrentLanguage'
+import { useCurrentLanguage as useCurrentLanguageServer } from './../../server/utils/useCurrentLanguage'
 
 /**
  * Runs language negotiation on the server.

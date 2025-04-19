@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'url'
-import { defineNuxtModule, extendPages, addServerPlugin } from '@nuxt/kit'
+import { defineNuxtModule, extendPages } from '@nuxt/kit'
 import type { ModuleOptions } from './build/types'
 import { defaultOptions } from './build/helpers'
 import { ModuleHelper } from './build/classes/ModuleHelper'
@@ -25,17 +25,12 @@ export default defineNuxtModule<ModuleOptions>({
     helper.addComposable('useCurrentLanguage')
     helper.addComposable('useLanguageLinks')
     helper.addComposable('definePageLanguageLinks')
-    helper.addPlugin('language')
+    helper.addPlugin('serverNegotiation')
+    helper.addPlugin('router')
 
     helper.addServerUtil('useCurrentLanguage')
 
     helper.addAlias('#nuxt-language-negotiation', helper.paths.moduleBuildDir)
-
-    addServerPlugin(
-      helper.resolvers.module.resolve(
-        './runtime/server/plugins/languageNegotiation',
-      ),
-    )
 
     const negotiators = passedOptions.negotiators
     negotiators.forEach((negotiator) => {
@@ -46,11 +41,19 @@ export default defineNuxtModule<ModuleOptions>({
       helper.addTemplate(template)
     })
 
+    const routerOptions = helper.resolvers.module.resolve(
+      './runtime/app/router.options',
+    )
+
+    nuxt.hooks.hook('pages:routerOptions', (ctx) => {
+      ctx.files.push({
+        path: routerOptions,
+      })
+    })
+
     extendPages((pages) => {
       pages.forEach((page) => {
-        if (page.name && page.name.startsWith('language-')) {
-          page.name = page.name.replace('language-', '')
-        }
+        console.log(page)
       })
     })
 

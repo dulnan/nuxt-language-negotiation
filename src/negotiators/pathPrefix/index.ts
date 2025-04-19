@@ -1,5 +1,10 @@
 import { defineLanguageNegotiator } from './../defineLanguageNegotiator'
 
-export default defineLanguageNegotiator('pathPrefix', (helper, options) => {
+/**
+ * Negotiates the language based on a path prefix.
+ */
+export default defineLanguageNegotiator<{
+  defaultLanguageNoPrefix?: boolean
+}>('pathPrefix', (helper, options) => {
   helper.addServerNegotiator('pathPrefix', options)
 })

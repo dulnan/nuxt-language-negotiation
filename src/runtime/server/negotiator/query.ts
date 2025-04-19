@@ -12,8 +12,8 @@ export default defineServerNegotiator<{ keys: string[] }>((options) => {
   return {
     negotiate(event) {
       const query = getQuery(event)
-      for (let i = 0; i < options.keys.length; i++) {
-        const value = query[options.keys[i]]
+      for (const key of options.keys) {
+        const value = query[key]
         if (value && typeof value === 'string') {
           return value
         }
