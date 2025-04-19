@@ -11,7 +11,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-language-negotiation',
     configKey: 'languageNegotiation',
-    version: '1.0.0',
+    version: '2.0.0',
     compatibility: {
       nuxt: '^3.16.0',
     },
@@ -27,6 +27,8 @@ export default defineNuxtModule<ModuleOptions>({
     helper.addComposable('definePageLanguageLinks')
     helper.addPlugin('language')
 
+    helper.addServerUtil('useCurrentLanguage')
+
     helper.addAlias('#nuxt-language-negotiation', helper.paths.moduleBuildDir)
 
     addServerPlugin(
@@ -34,6 +36,11 @@ export default defineNuxtModule<ModuleOptions>({
         './runtime/server/plugins/languageNegotiation',
       ),
     )
+
+    const negotiators = passedOptions.negotiators
+    negotiators.forEach((negotiator) => {
+      negotiator.init(helper, negotiator.options)
+    })
 
     TEMPLATES.forEach((template) => {
       helper.addTemplate(template)

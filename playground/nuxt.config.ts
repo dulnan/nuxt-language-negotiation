@@ -1,5 +1,6 @@
 import { defineNuxtConfig } from 'nuxt/config'
 import NuxtLanguageNegotiation from './../src/module'
+import { pathPrefix, cookie, acceptLanguage, query } from './../src/negotiators'
 
 export default defineNuxtConfig({
   modules: [NuxtLanguageNegotiation, '@nuxt/eslint'],
@@ -10,7 +11,14 @@ export default defineNuxtConfig({
 
   languageNegotiation: {
     availableLanguages: ['de', 'en', 'fr', 'it'],
-    negotiators: ['pathPrefix', 'acceptLanguage'],
+    negotiators: [
+      pathPrefix(),
+      cookie(),
+      acceptLanguage(),
+      query({
+        keys: ['language'],
+      }),
+    ],
     debug: true,
     defaultLanguageNoPrefix: false,
   },

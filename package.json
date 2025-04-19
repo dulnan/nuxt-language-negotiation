@@ -22,7 +22,8 @@
       "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs"
     },
-    "./server-options": "./dist/server-options.mjs"
+    "./server-options": "./dist/server-options.mjs",
+    "./negotiators": "./dist/negotiators.mjs"
   },
   "main": "./dist/module.mjs",
   "typesVersions": {
@@ -32,6 +33,9 @@
       ],
       "server-options": [
         "./dist/server-options.d.mts"
+      ],
+      "negotiators": [
+        "./dist/negotiators.d.mts"
       ]
     }
   },
@@ -39,13 +43,13 @@
     "dist"
   ],
   "scripts": {
-    "prepack": "nuxt-module-build",
+    "prepack": "nuxt-module-build build",
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "PLAYGROUND_MODULE_BUILD=true nuxt-module-build build --stub && PLAYGROUND_MODULE_BUILD=true nuxt-module-build prepare && nuxi prepare playground",
     "generate": "nuxi generate",
-    "typecheck": "nuxi typecheck",
+    "typecheck": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "docs:dev": "vitepress dev docs --port 5000",
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs --port 5000",

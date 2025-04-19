@@ -70,6 +70,12 @@ type ModuleHelperPaths = {
   moduleBuildDir: string
 }
 
+type ServerNegotiator = {
+  name: string
+  filePath: string
+  options?: object
+}
+
 export class ModuleHelper {
   public readonly resolvers: ModuleHelperResolvers
   public readonly paths: ModuleHelperPaths
@@ -77,6 +83,8 @@ export class ModuleHelper {
   public readonly isDev: boolean
 
   public readonly options: RequiredModuleOptions
+
+  private serverNegotiators: ServerNegotiator[] = []
 
   private nitroExternals: string[] = []
   private tsPaths: Record<string, string> = {}
@@ -226,7 +234,7 @@ export class ModuleHelper {
 
   public addTemplate(template: ModuleTemplate) {
     if (template.build) {
-      const content = template.build(this)
+      const content = template.build(this).trim()
       addTemplate({
         filename: 'nuxt-language-negotiation/' + template.options.name + '.js',
         write: true,
@@ -235,7 +243,7 @@ export class ModuleHelper {
     }
 
     if (template.buildTypes) {
-      const content = template.buildTypes(this)
+      const content = template.buildTypes(this).trim()
       const filename =
         `nuxt-language-negotiation/${template.options.name}.d.ts` as `${string}.d.ts`
       addTypeTemplate(
@@ -281,5 +289,20 @@ export class ModuleHelper {
         name,
       },
     ])
+  }
+
+  public addServerNegotiator(name: string, options: object = {}) {
+    const filePath = this.resolvers.module.resolve(
+      `./runtime/server/negotiator/${name}`,
+    )
+    this.serverNegotiators.push({
+      name,
+      filePath,
+      options,
+    })
+  }
+
+  public getServerNegotiators(): ServerNegotiator[] {
+    return this.serverNegotiators
   }
 }

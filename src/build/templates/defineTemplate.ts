@@ -5,6 +5,7 @@ export type ModuleTemplateInit = (helper: ModuleHelper) => ModuleTemplate
 export type ModuleTemplateOptions = {
   name: string
   serverTypes?: boolean
+  serverOnly?: boolean
 }
 
 export type ModuleTemplate = {

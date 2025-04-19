@@ -1,29 +1,10 @@
-import type { H3Event } from 'h3'
-import type { PageLanguage } from '#language-negotiation/language'
+import type { ModuleHelper } from './classes/ModuleHelper'
 
-export type BuiltInNegotiators =
-  | 'pathPrefix'
-  | 'acceptLanguage'
-  | 'queryString'
-  | 'cookie'
-
-export type Negotiators = BuiltInNegotiators | (string & {})
-
-export type LanguageNegotiatorPublicConfig = {
-  availableLanguages: PageLanguage[]
-  queryStringKeys: string[]
-  debug: boolean
-  prefixMapping: Record<PageLanguage, string>
-  cookieName: string
-  negotiators: Partial<Record<BuiltInNegotiators, boolean>>
-  defaultLanguageNoPrefix: boolean
-  defaultLanguage: PageLanguage
+export type LanguageNegotiatorDefinition<T extends object = object> = {
+  name: string
+  options: T
+  init: (helper: ModuleHelper, options: T) => void
 }
-
-export type LanguageNegotiator = (
-  event: H3Event,
-  config: LanguageNegotiatorPublicConfig,
-) => string | undefined | null
 
 export type ModuleOptions = {
   /**
@@ -51,7 +32,7 @@ export type ModuleOptions = {
   /**
    * Available negotiators.
    */
-  negotiators: Negotiators[]
+  negotiators: LanguageNegotiatorDefinition[]
 
   /**
    * Provide an object that maps the prefix to a language. If empty, the
@@ -87,13 +68,7 @@ export type ModuleOptions = {
   cookieName?: string
 
   /**
-   * Log helpfull debugging messages.
+   * Log helpful debugging messages.
    */
   debug?: boolean
-}
-
-export type LanguageLink = {
-  code: string
-  to: any
-  active: boolean
 }

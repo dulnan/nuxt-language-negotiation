@@ -15,6 +15,7 @@ export const prefixMapping = ${JSON.stringify(helper.options.prefixMapping || {}
 export const cookieName = ${JSON.stringify(helper.options.cookieName)}
 export const defaultLanguageNoPrefix = ${JSON.stringify(helper.options.defaultLanguageNoPrefix)}
 export const defaultLanguage = ${JSON.stringify(defaultLanguage)}
+export const negotiators = ${JSON.stringify(helper.options.negotiators)}
 `
   },
   (helper) => {

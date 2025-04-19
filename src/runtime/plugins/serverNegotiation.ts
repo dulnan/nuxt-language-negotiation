@@ -1,0 +1,16 @@
+import { defineNuxtPlugin } from '#imports'
+import { useCurrentLanguage as useCurrentLanguageServer } from './../server/utils/useCurrentLanguage'
+
+/**
+ * Runs language negotiation on the server.
+ */
+export default defineNuxtPlugin({
+  name: 'nuxt-language-negotiation:server-negotiation',
+  async setup(app) {
+    const event = app.ssrContext?.event
+    if (event) {
+      // This will store the language in the context.
+      await useCurrentLanguageServer(event)
+    }
+  },
+})
