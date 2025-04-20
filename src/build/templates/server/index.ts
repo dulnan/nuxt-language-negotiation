@@ -37,11 +37,11 @@ export default defineTemplate(
 ${imports}
 ${serverOptionsLine}
 
-export { serverOptions }
-
 export const negotiators = [
   ${inits}
 ]
+
+export { serverOptions }
 `
   },
   (helper) => {

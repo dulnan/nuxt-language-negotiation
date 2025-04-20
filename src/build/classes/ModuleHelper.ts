@@ -104,6 +104,14 @@ export class ModuleHelper {
       mergedOptions.availableLanguages = ['de', 'en', 'fr', 'it']
     }
 
+    if (!mergedOptions.availableLanguages.length) {
+      throw new Error('At least one language is required.')
+    }
+
+    if (!mergedOptions.defaultLanguage) {
+      mergedOptions.defaultLanguage = mergedOptions.availableLanguages[0]
+    }
+
     // Resolver for the root directory.
     const srcResolver = createResolver(nuxt.options.srcDir)
     const rootResolver = createResolver(nuxt.options.rootDir)
@@ -234,11 +242,12 @@ export class ModuleHelper {
 
   public addTemplate(template: ModuleTemplate) {
     if (template.build) {
-      const content = template.build(this).trim()
+      const content = template.build(this)
       addTemplate({
         filename: 'nuxt-language-negotiation/' + template.options.name + '.js',
         write: true,
-        getContents: () => content,
+        getContents:
+          typeof content === 'string' ? () => content.trim() : content,
       })
     }
 

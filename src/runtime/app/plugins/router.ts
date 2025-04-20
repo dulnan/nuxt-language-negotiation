@@ -7,6 +7,10 @@ import type {
 } from 'vue-router'
 import { useRouter, defineNuxtPlugin, useCurrentLanguage } from '#imports'
 
+function falsy<T>(value: T): value is NonNullable<T> {
+  return value !== null && value !== undefined
+}
+
 /**
  * Replaces methods on the vue-router instance to handle translated routes.
  */
@@ -16,18 +20,55 @@ export default defineNuxtPlugin({
   setup() {
     const router = useRouter()
     const currentLanguage = useCurrentLanguage()
+    const routes = router.getRoutes()
+
+    const routesWithoutMapping = new Set(
+      routes
+        .map((v) => {
+          if (typeof v.name === 'string' && !v.name.includes('___')) {
+            return v.name
+          }
+          return null
+        })
+        .filter(falsy),
+    )
+
+    const routesWithLangParam = new Set(
+      routes
+        .map((v) => {
+          if (v.path.includes(':langPrefix')) {
+            return v.name
+          }
+          return null
+        })
+        .filter(falsy),
+    )
+
+    console.log([...routesWithLangParam.keys()])
 
     function translateLocation(v: RouteLocationRaw): RouteLocationRaw {
       if (typeof v === 'object') {
-        if ('name' in v) {
+        if ('name' in v && v.name) {
           let name = v.name?.toString() || ''
-          if (name && !name.includes('___')) {
-            name = name + '___' + currentLanguage.value
-            return {
-              ...v,
-              name,
-            } as any
+          const params = { ...(v.params || {}) }
+          if (
+            routesWithLangParam.has(v.name.toString()) &&
+            !params.langPrefix
+          ) {
+            params.langPrefix = currentLanguage.value
           }
+          if (
+            name &&
+            !name.includes('___') &&
+            !routesWithoutMapping.has(name)
+          ) {
+            name = name + '___' + currentLanguage.value
+          }
+          return {
+            ...v,
+            name,
+            params,
+          } as any
         }
       }
 

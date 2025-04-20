@@ -6,6 +6,7 @@ import { defineServerNegotiator } from '../helpers/defineServerNegotiator'
  */
 export default defineServerNegotiator<{ cookieName?: string }>((options) => {
   const cookieName = options.cookieName || 'negotiatedLanguage'
+
   return {
     negotiate(event) {
       return getCookie(event, cookieName)

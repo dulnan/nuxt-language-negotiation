@@ -10,7 +10,7 @@ export type ModuleTemplateOptions = {
 
 export type ModuleTemplate = {
   options: ModuleTemplateOptions
-  build: (helper: ModuleHelper) => string
+  build: (helper: ModuleHelper) => string | (() => string)
   buildTypes: (helper: ModuleHelper) => string
 }
 

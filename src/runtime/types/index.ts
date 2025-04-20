@@ -1,8 +1,9 @@
 import type { H3Event } from 'h3'
+import type { RouteLocationRaw } from 'vue-router'
 
 type LanguageLinkAvailable = {
   enabled: true
-  to: string
+  to: RouteLocationRaw
 }
 
 type LanguageLinkDisabled = {

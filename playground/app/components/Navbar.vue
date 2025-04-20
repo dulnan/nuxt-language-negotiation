@@ -13,32 +13,32 @@
     <h2 class="text-xl font-bold mt-10">Menu</h2>
     <ul>
       <li v-for="(page, i) in pages" :key="i">
-        <nuxt-link v-slot="{ href, isActive, navigate }" :to="page" custom>
-          <a
-            :href="href"
-            class="block py-2 font-bold"
-            :class="{ 'text-blue-700': isActive }"
-            @click="navigate"
-            >{{ href }}</a
-          >
-        </nuxt-link>
+        <NuxtLink
+          v-slot="{ href }"
+          :to="page"
+          exact-active-class="text-blue-700"
+          class="block py-2 font-bold"
+        >
+          {{ href }}
+        </NuxtLink>
       </li>
     </ul>
 
     <h2 class="text-xl font-bold mt-10">Language Links</h2>
-    <ul>
-      <li v-for="(link, i) in languageLinks" :key="i + link.code">
-        <nuxt-link v-slot="{ href, isActive, navigate }" :to="link.to" custom>
-          <a
-            :href="href"
+    <ClientOnly>
+      <ul>
+        <li v-for="(link, i) in languageLinks" :key="i + link.code">
+          <NuxtLink
+            v-slot="{ href }"
+            :to="link.to"
+            exact-active-class="text-blue-700"
             class="block py-2 font-bold"
-            :class="{ 'text-blue-700': isActive }"
-            @click="navigate"
-            >{{ href }}</a
           >
-        </nuxt-link>
-      </li>
-    </ul>
+            {{ href }}
+          </NuxtLink>
+        </li>
+      </ul>
+    </ClientOnly>
   </header>
 </template>
 
@@ -49,14 +49,14 @@ const pages = computed(() => {
   return [
     { name: 'search' },
     { name: 'page-with-aliases' },
+    { name: 'products' },
     {
       path: defaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german',
     },
     { path: '/en/page-1-english' },
+    { name: 'deeply-nested' },
   ]
 })
-
-const app = useNuxtApp()
 
 const route = useRoute()
 const language = useCurrentLanguage()

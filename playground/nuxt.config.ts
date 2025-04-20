@@ -15,7 +15,7 @@ export default defineNuxtConfig({
       acceptLanguage(),
     ],
     debug: true,
-    defaultLanguageNoPrefix: false,
+    defaultLanguageNoPrefix: true,
   },
 
   css: ['~/assets/css/main.css'],
@@ -34,8 +34,24 @@ export default defineNuxtConfig({
     },
   },
 
+  experimental: {
+    scanPageMeta: true,
+    extraPageMetaExtractionKeys: ['languageMapping'],
+  },
+
   compatibilityDate: '2025-04-19',
   future: {
     compatibilityVersion: 4,
+  },
+
+  vite: {
+    build: {
+      minify: false,
+    },
+    server: {
+      watch: {
+        usePolling: true,
+      },
+    },
   },
 })

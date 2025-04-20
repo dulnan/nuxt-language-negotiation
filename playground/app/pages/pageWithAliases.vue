@@ -7,10 +7,9 @@ definePageMeta({
   name: 'page-with-aliases',
   path: '/path-german',
   languageMapping: {
-    de: '/path-german',
-    en: '/en/path-english',
-    fr: '/fr/path-french',
-    it: '/it/path-italian',
+    en: '/path-english',
+    fr: '/path-french',
+    it: '/path-italian',
   },
 })
 </script>

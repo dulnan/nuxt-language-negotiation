@@ -53,9 +53,11 @@ const { data: page } = await useAsyncData(route.path, () => {
       })
     }),
   )
-  // definePageLanguageLinks(route.path, match.languageLinks)
 })
+
 if (!page.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found' })
 }
+
+definePageLanguageLinks(page.value.languageLinks)
 </script>

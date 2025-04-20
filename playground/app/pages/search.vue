@@ -4,10 +4,11 @@
 
 <script lang="ts" setup>
 definePageMeta({
+  path: '/suchen',
   languageMapping: {
-    de: '/suchen',
-    fr: '/fr/rechercher',
-    it: '/it/ricerca',
+    en: '/search',
+    fr: '/rechercher',
+    it: '/ricerca',
   },
 })
 </script>

@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'url'
-import { defineNuxtModule, extendPages } from '@nuxt/kit'
+import { defineNuxtModule } from '@nuxt/kit'
 import type { ModuleOptions } from './build/types'
 import { defaultOptions } from './build/helpers'
 import { ModuleHelper } from './build/classes/ModuleHelper'
@@ -26,7 +26,6 @@ export default defineNuxtModule<ModuleOptions>({
     helper.addComposable('useLanguageLinks')
     helper.addComposable('definePageLanguageLinks')
     helper.addPlugin('serverNegotiation')
-    helper.addPlugin('router')
 
     helper.addServerUtil('useCurrentLanguage')
 
@@ -39,22 +38,6 @@ export default defineNuxtModule<ModuleOptions>({
 
     TEMPLATES.forEach((template) => {
       helper.addTemplate(template)
-    })
-
-    const routerOptions = helper.resolvers.module.resolve(
-      './runtime/app/router.options',
-    )
-
-    nuxt.hooks.hook('pages:routerOptions', (ctx) => {
-      ctx.files.push({
-        path: routerOptions,
-      })
-    })
-
-    extendPages((pages) => {
-      pages.forEach((page) => {
-        console.log(page)
-      })
     })
 
     helper.applyBuildConfig()

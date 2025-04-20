@@ -1,4 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import { pathPrefix, cookie, acceptLanguage, query } from './src/negotiators'
 
 export default defineNuxtConfig({
   future: {
@@ -6,5 +7,15 @@ export default defineNuxtConfig({
   },
   typescript: {
     strict: true,
+  },
+  languageNegotiation: {
+    negotiators: [
+      pathPrefix(),
+      query({
+        keys: ['language'],
+      }) as any,
+      cookie(),
+      acceptLanguage(),
+    ],
   },
 })

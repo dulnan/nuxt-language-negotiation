@@ -49,25 +49,6 @@ export type ModuleOptions = {
   prefixMapping?: Record<string, string>
 
   /**
-   * Array of query keys to use for the `queryString` negotiator.
-   *
-   * Useful for server handlers / APIs without a language prefix:
-   * /api/getProduct?id=123&language=en
-   * /api/getProducts?__language_context=de
-   *
-   * @example
-   *  ['language', '__language_context']
-   *
-   * @default ['language']
-   */
-  queryStringKeys?: string[]
-
-  /**
-   * Name of the cookie to store the language in.
-   */
-  cookieName?: string
-
-  /**
    * Log helpful debugging messages.
    */
   debug?: boolean

@@ -28,6 +28,7 @@ import type { LanguageLinkBase } from '${helper.paths.runtimeTypes}'
 
 declare module '#nuxt-language-negotiation/config' {
   export type ValidLanguage = ${ValidLanguage};
+  export type ValidMappingLanguage = Exclude<ValidLanguage, '${helper.options.defaultLanguage}'>
   export type LanguageLink = LanguageLinkBase<ValidLanguage>
 
   export const languages: ValidLanguage[];
