@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'url'
 import { defineNuxtModule } from '@nuxt/kit'
 import type { ModuleOptions } from './build/types'
-import { defaultOptions } from './build/helpers'
 import { ModuleHelper } from './build/classes/ModuleHelper'
 import { TEMPLATES } from './build/templates'
 
@@ -16,19 +15,15 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: '^3.16.0',
     },
   },
-  defaults: defaultOptions,
   setup(passedOptions, nuxt) {
     const helper = new ModuleHelper(nuxt, import.meta.url, passedOptions)
 
     helper.transpile(fileURLToPath(new URL('./runtime', import.meta.url)))
-
     helper.addComposable('useCurrentLanguage')
     helper.addComposable('useLanguageLinks')
     helper.addComposable('definePageLanguageLinks')
     helper.addPlugin('serverNegotiation')
-
     helper.addServerUtil('useCurrentLanguage')
-
     helper.addAlias('#nuxt-language-negotiation', helper.paths.moduleBuildDir)
 
     const negotiators = passedOptions.negotiators

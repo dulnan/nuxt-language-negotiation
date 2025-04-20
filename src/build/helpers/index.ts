@@ -1,23 +1,10 @@
 import { existsSync } from 'node:fs'
 import { useLogger } from '@nuxt/kit'
 import type { ConsolaInstance } from 'consola'
-import type { ModuleOptions } from '../types'
 
 export const logger: ConsolaInstance = useLogger('nuxt-language-negotiation')
 
 export const LANGUAGE_CONTEXT_KEY = '__language_context'
-
-export const defaultOptions: ModuleOptions = {
-  availableLanguages: [],
-  negotiators: [],
-  prefixMapping: {},
-  debug: false,
-}
-
-/**
- * Validate the module options.
- */
-export function validateOptions(options: Partial<ModuleOptions>) {}
 
 export const fileExists = (
   path?: string,

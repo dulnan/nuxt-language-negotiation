@@ -1,9 +1,9 @@
 import { defineServerNegotiator } from '../helpers/defineServerNegotiator'
 import {
   defaultLanguageNoPrefix,
-  defaultLanguage,
+  defaultLangcode,
+  prefixToLangcode,
 } from '#nuxt-language-negotiation/config'
-import { isValidLanguage } from '../../helpers/isValidLanguage'
 
 /**
  * Negotiates the language based on a path prefix.
@@ -11,20 +11,20 @@ import { isValidLanguage } from '../../helpers/isValidLanguage'
 export default defineServerNegotiator(() => {
   return {
     negotiate(event) {
-      const path = event.path
-      if (!path) {
-        return
-      }
+      const matches = /\/([^/]+)/.exec(event.path)
+      const prefix = matches?.[1]
 
-      const matches = /\/([^/]+)/.exec(path)
-      const match = matches?.[1]
+      if (prefix) {
+        const langcode = prefixToLangcode[prefix]
+        if (langcode) {
+          return langcode
+        }
+      }
 
       // If we didn't find a match and if the default language has no prefix, return the default language.
-      if (defaultLanguageNoPrefix && (!match || !isValidLanguage(match))) {
-        return defaultLanguage
+      if (defaultLanguageNoPrefix) {
+        return defaultLangcode
       }
-
-      return match
     },
   }
 })

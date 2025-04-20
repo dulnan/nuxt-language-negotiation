@@ -32,4 +32,10 @@ export type ServerNegotiator = {
   negotiate: (event: H3Event) => string | null | undefined
 }
 
+export type LanguageBase<T extends string = string> = {
+  code: T
+  label: string
+  prefix: string
+}
+
 export {}

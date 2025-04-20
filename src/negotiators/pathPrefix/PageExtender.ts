@@ -3,6 +3,7 @@ import type { ModuleHelper } from './../../build/classes/ModuleHelper'
 import type { RouteLocationRaw } from 'vue-router'
 import { cleanPagePath, getFullPagePath } from '../../build/helpers/pages'
 import { logger } from '../../build/helpers'
+import type { LanguageBase } from '../../runtime/types'
 
 export type BuildLanguageLinks = {
   originalName: string
@@ -18,33 +19,25 @@ const CATCH_ALL_REGEX = /^\/:([A-Za-z0-9]+)\(\.\*\)\*$/
 export class PageExtender {
   private readonly languageLinks: BuildLanguageLinks[] = []
   private languageParam: string
-  private languages: string[]
-  private defaultLanguage: string
-  private debugEnabled: boolean
   private logMessages: [string, string][] = []
-  private defaultLanguageNoPrefix: boolean
 
-  constructor(helper: ModuleHelper) {
-    this.defaultLanguageNoPrefix = helper.options.defaultLanguageNoPrefix
-    this.debugEnabled = helper.options.debug
-    this.languages = helper.options.availableLanguages
-    this.defaultLanguage = helper.options.defaultLanguage
-    const nonDefaultLanguages = this.languages.filter(
-      (l) => l !== this.defaultLanguage,
+  constructor(private helper: ModuleHelper) {
+    const nonDefaultLanguages = helper.languages.filter(
+      (v) => v.code !== this.helper.defaultLanguage.code,
     )
 
     // If the default language has no prefix, we need to adjust the param:
     // The default language is removed from the possible param values and
     // the entire param is optional.
-    this.languageParam = this.defaultLanguageNoPrefix
-      ? `:langPrefix(${nonDefaultLanguages.join('|')})?`
-      : `:langPrefix(${this.languages.join('|')})`
+    this.languageParam = this.helper.defaultLanguageNoPrefix
+      ? `:langPrefix(${nonDefaultLanguages.map((v) => v.prefix).join('|')})?`
+      : `:langPrefix(${helper.languages.map((v) => v.prefix).join('|')})`
   }
 
   public extend(
     pages: NuxtPage[],
     parentPath = '',
-    onlyLanguage?: string,
+    onlyLanguage?: LanguageBase,
   ): NuxtPage[] {
     const extended: NuxtPage[] = []
 
@@ -73,12 +66,12 @@ export class PageExtender {
           // We are inside a language‑specific tree (parent already translated).
           const relative = getFullPagePath(page.path, parentPath)
           const absPath = cleanPagePath(
-            onlyLanguage === this.defaultLanguage &&
-              this.defaultLanguageNoPrefix
+            onlyLanguage.code === this.helper.defaultLanguage.code &&
+              this.helper.defaultLanguageNoPrefix
               ? `/${relative}`
-              : `/${onlyLanguage}/${relative}`,
+              : `/${onlyLanguage.prefix}/${relative}`,
           )
-          const translatedName = `${page.name}___${onlyLanguage}`
+          const translatedName = `${page.name}___${onlyLanguage.code}`
 
           this.addLanguageLink(
             onlyLanguage,
@@ -104,11 +97,14 @@ export class PageExtender {
           `/${this.languageParam}${getFullPagePath(page.path, '')}`,
         )
 
-        for (const lang of this.languages) {
+        for (const lang of this.helper.languages) {
           const linkPath =
-            lang === this.defaultLanguage && this.defaultLanguageNoPrefix
+            lang.code === this.helper.defaultLanguage.code &&
+            this.helper.defaultLanguageNoPrefix
               ? cleanPagePath(`/${getFullPagePath(page.path, '')}`)
-              : cleanPagePath(`/${lang}${getFullPagePath(page.path, '')}`)
+              : cleanPagePath(
+                  `/${lang.prefix}${getFullPagePath(page.path, '')}`,
+                )
 
           this.addLanguageLink(lang, originalName, originalName, linkPath)
         }
@@ -125,25 +121,32 @@ export class PageExtender {
       }
 
       // Route with language mapping.
-      const mappingIsEmpty = Object.keys(mapping).length === 0
+      const mappedLangcodes = Object.keys(mapping)
+      const mappingIsEmpty = mappedLangcodes.length === 0
       const langsToProcess = mappingIsEmpty
-        ? [this.defaultLanguage]
-        : this.languages
+        ? [this.helper.defaultLanguage]
+        : this.helper.languages.filter(
+            (language) =>
+              mappedLangcodes.includes(language.code) ||
+              language.code === this.helper.defaultLanguage.code,
+          )
 
       for (const lang of langsToProcess) {
-        if (onlyLanguage && lang !== onlyLanguage) continue
-        if (mappingIsEmpty && lang !== this.defaultLanguage) continue
+        if (onlyLanguage && lang.code !== onlyLanguage.code) continue
+        if (mappingIsEmpty && lang.code !== this.helper.defaultLanguage.code)
+          continue
 
-        const segment = mapping[lang] ?? page.path
+        const segment = mapping[lang.code] ?? page.path
         const relative = getFullPagePath(segment, parentPath)
         const absPath = cleanPagePath(
-          lang === this.defaultLanguage && this.defaultLanguageNoPrefix
+          lang.code === this.helper.defaultLanguage.code &&
+            this.helper.defaultLanguageNoPrefix
             ? `/${relative}`
-            : `/${lang}/${relative}`,
+            : `/${lang.prefix}/${relative}`,
         )
         const routeName = mappingIsEmpty
           ? originalName
-          : `${page.name}___${lang}`
+          : `${page.name}___${lang.code}`
 
         this.addLanguageLink(lang, originalName, routeName, absPath)
 
@@ -168,7 +171,7 @@ export class PageExtender {
   }
 
   private addLanguageLink(
-    language: string,
+    language: LanguageBase,
     originalName: string,
     name: string,
     path: string,
@@ -176,13 +179,13 @@ export class PageExtender {
     const to = path.includes(':') ? { name } : path
     this.languageLinks.push({
       originalName,
-      language,
+      language: language.code,
       to,
     })
   }
 
   private addPagesToLog(pages: NuxtPage[]) {
-    if (!this.debugEnabled) {
+    if (!this.helper.debug) {
       return
     }
 
@@ -192,7 +195,7 @@ export class PageExtender {
   }
 
   public logMessagesToConsole() {
-    if (!this.debugEnabled) {
+    if (!this.helper.debug) {
       return
     }
 

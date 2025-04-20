@@ -1,5 +1,6 @@
 import { getQuery } from 'h3'
 import { defineServerNegotiator } from '../helpers/defineServerNegotiator'
+import { isValidLanguage } from '../../helpers/isValidLanguage'
 
 /**
  * Negotiate the language based on a query string value.
@@ -14,7 +15,7 @@ export default defineServerNegotiator<{ keys: string[] }>((options) => {
       const query = getQuery(event)
       for (const key of options.keys) {
         const value = query[key]
-        if (value && typeof value === 'string') {
+        if (value && typeof value === 'string' && isValidLanguage(value)) {
           return value
         }
       }

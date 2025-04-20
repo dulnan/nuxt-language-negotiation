@@ -1,8 +1,11 @@
+import { prefixToLangcode } from '#nuxt-language-negotiation/config'
+
 export function getLanguageFromPath(path = ''): string | undefined {
   if (!path) {
     return
   }
 
   const matches = /\/([^/]+)/.exec(path)
-  return matches?.[1]
+  const match = matches?.[1] || ''
+  return prefixToLangcode[match]
 }

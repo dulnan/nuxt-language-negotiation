@@ -9,17 +9,20 @@
         <div class="font-bold">Current route</div>
         <div>{{ route.name }}</div>
       </div>
+      <div>
+        <div class="font-bold">Language from API</div>
+        <div>{{ data?.language }}</div>
+      </div>
     </div>
     <h2 class="text-xl font-bold mt-10">Menu</h2>
     <ul>
       <li v-for="(page, i) in pages" :key="i">
         <NuxtLink
-          v-slot="{ href }"
           :to="page"
           exact-active-class="text-blue-700"
           class="block py-2 font-bold"
         >
-          {{ href }}
+          {{ page.path || page.name }}
         </NuxtLink>
       </li>
     </ul>
@@ -29,13 +32,16 @@
       <ul>
         <li v-for="(link, i) in languageLinks" :key="i + link.code">
           <NuxtLink
-            v-slot="{ href }"
+            v-if="link.enabled"
             :to="link.to"
             exact-active-class="text-blue-700"
             class="block py-2 font-bold"
           >
-            {{ href }}
+            {{ link.label }}
           </NuxtLink>
+          <div v-else class="block py-2">
+            {{ link.label }}
+          </div>
         </li>
       </ul>
     </ClientOnly>
@@ -61,4 +67,12 @@ const pages = computed(() => {
 const route = useRoute()
 const language = useCurrentLanguage()
 const languageLinks = useLanguageLinks()
+
+const { data } = await useAsyncData(() => {
+  return $fetch('/api/test', {
+    query: {
+      language: language.value,
+    },
+  })
+})
 </script>

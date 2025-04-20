@@ -1,8 +1,8 @@
 import type { ServerOptions } from './runtime/types/index'
-import type { ValidLanguage } from '#nuxt-language-negotiation/config'
+import type { Langcode } from '#nuxt-language-negotiation/config'
 
 export function defineLanguageServerOptions(
-  options: ServerOptions<ValidLanguage>,
-): ServerOptions<ValidLanguage> {
+  options: ServerOptions<Langcode>,
+): ServerOptions<Langcode> {
   return options
 }

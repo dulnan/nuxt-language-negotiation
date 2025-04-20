@@ -15,19 +15,19 @@ export default defineTemplate(
     const relativePath = relative(helper.paths.moduleBuildDir, nuxtDist)
 
     return `
-import type { ValidMappingLanguage } from '#nuxt-language-negotiation/config'
+import type { ValidMappingLangcode, Langcode } from '#nuxt-language-negotiation/config'
+
+interface LanguageNegotiationPageMeta {
+  languageMapping?: Partial<Record<ValidMappingLangcode, string>>
+  originalName?: string
+}
 
 declare module '#app' {
-  interface PageMeta {
-    languageMapping?: Partial<Record<ValidMappingLanguage, string>>
-    originalName?: string
-  }
+  interface PageMeta extends LanguageNegotiationPageMeta {}
 }
 
 declare module "${relativePath}" {
-  interface PageMeta {
-    languageMapping?: Partial<Record<ValidMappingLanguage, string>>
-  }
+  interface PageMeta extends LanguageNegotiationPageMeta {}
 }
 
 declare module 'vue-router' {
@@ -35,20 +35,17 @@ declare module 'vue-router' {
     /**
      * The language code.
      */
-    language?: ValidLanguage
+    language?: Langcode
   }
 
   interface RouteLocationPathRaw {
     /**
      * The language code.
      */
-    language?: ValidLanguage
+    language?: Langcode
   }
 
-  interface RouteMeta {
-    languageMapping?: Partial<Record<ValidMappingLanguage, string>>
-    originalName: string
-  }
+  interface RouteMeta extends LanguageNegotiationPageMeta {}
 }
 `
   },

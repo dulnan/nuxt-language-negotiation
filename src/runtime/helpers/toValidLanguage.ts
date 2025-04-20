@@ -1,16 +1,15 @@
 import {
-  type ValidLanguage,
-  languages,
-  defaultLanguage,
+  type Langcode,
+  langcodes,
+  defaultLangcode,
 } from '#nuxt-language-negotiation/config'
 
-export function toValidLanguage(language: unknown): ValidLanguage {
+export function toValidLanguage(language: unknown): Langcode {
   if (typeof language === 'string') {
-    const lowercase = language.toLowerCase()
-    if (languages.includes(lowercase as any)) {
-      return lowercase as ValidLanguage
+    if (langcodes.includes(language as any)) {
+      return language as Langcode
     }
   }
 
-  return defaultLanguage
+  return defaultLangcode
 }

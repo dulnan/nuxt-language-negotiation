@@ -29,6 +29,7 @@ definePageMeta({
     fr: '/produits',
     it: '/prodotti',
     en: '/products',
+    gsw_CH: '/produkt',
   },
 })
 

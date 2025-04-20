@@ -6,10 +6,15 @@ import type {
   RouteLocationNormalizedLoaded,
 } from 'vue-router'
 import { useRouter, defineNuxtPlugin, useCurrentLanguage } from '#imports'
-
-function falsy<T>(value: T): value is NonNullable<T> {
-  return value !== null && value !== undefined
-}
+import {
+  routeNamesWithLanguageParam,
+  routeNamesWithoutMapping,
+  pageLanguageLinks,
+} from '#nuxt-language-negotiation/routes'
+import {
+  defaultLangcode,
+  langcodeToPrefix,
+} from '#nuxt-language-negotiation/config'
 
 /**
  * Replaces methods on the vue-router instance to handle translated routes.
@@ -20,31 +25,6 @@ export default defineNuxtPlugin({
   setup() {
     const router = useRouter()
     const currentLanguage = useCurrentLanguage()
-    const routes = router.getRoutes()
-
-    const routesWithoutMapping = new Set(
-      routes
-        .map((v) => {
-          if (typeof v.name === 'string' && !v.name.includes('___')) {
-            return v.name
-          }
-          return null
-        })
-        .filter(falsy),
-    )
-
-    const routesWithLangParam = new Set(
-      routes
-        .map((v) => {
-          if (v.path.includes(':langPrefix')) {
-            return v.name
-          }
-          return null
-        })
-        .filter(falsy),
-    )
-
-    console.log([...routesWithLangParam.keys()])
 
     function translateLocation(v: RouteLocationRaw): RouteLocationRaw {
       if (typeof v === 'object') {
@@ -52,17 +32,25 @@ export default defineNuxtPlugin({
           let name = v.name?.toString() || ''
           const params = { ...(v.params || {}) }
           if (
-            routesWithLangParam.has(v.name.toString()) &&
+            routeNamesWithLanguageParam.includes(name) &&
             !params.langPrefix
           ) {
-            params.langPrefix = currentLanguage.value
+            params.langPrefix = langcodeToPrefix[currentLanguage.value]
           }
           if (
             name &&
             !name.includes('___') &&
-            !routesWithoutMapping.has(name)
+            !routeNamesWithoutMapping.includes(name)
           ) {
-            name = name + '___' + currentLanguage.value
+            const links = pageLanguageLinks[name]
+            if (links) {
+              const hasLinkInLanguage = links[currentLanguage.value]
+              if (hasLinkInLanguage) {
+                name = name + '___' + currentLanguage.value
+              } else {
+                name = name + '___' + defaultLangcode
+              }
+            }
           }
           return {
             ...v,

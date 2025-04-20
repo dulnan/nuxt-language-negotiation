@@ -11,5 +11,6 @@ export default defineBuildConfig({
     'accept-language-parser',
     '#nuxt-language-negotiation/config',
     '#nuxt-language-negotiation/server',
+    'iso-639-1',
   ],
 })

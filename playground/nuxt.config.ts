@@ -1,22 +1,35 @@
 import { defineNuxtConfig } from 'nuxt/config'
 import { pathPrefix, cookie, acceptLanguage, query } from './../src/negotiators'
+import type { ModuleOptions } from '../src/build/types'
+import NuxtLanguageNegotiation from './../src/module'
+
+const languageNegotiation: ModuleOptions = {
+  languages: [
+    'de',
+    'en',
+    'fr',
+    'it',
+    {
+      code: 'gsw_CH',
+      prefix: 'ch',
+      label: 'Schwizerdütsch',
+    },
+  ],
+  negotiators: [
+    pathPrefix(),
+    query({
+      keys: ['language'],
+    }),
+    cookie(),
+    acceptLanguage(),
+  ],
+  debug: true,
+}
 
 export default defineNuxtConfig({
-  modules: ['nuxt-language-negotiation', '@nuxt/eslint'],
+  modules: [NuxtLanguageNegotiation, '@nuxt/eslint'],
 
-  languageNegotiation: {
-    availableLanguages: ['de', 'en', 'fr', 'it'],
-    negotiators: [
-      pathPrefix(),
-      query({
-        keys: ['language'],
-      }),
-      cookie(),
-      acceptLanguage(),
-    ],
-    debug: true,
-    defaultLanguageNoPrefix: true,
-  },
+  languageNegotiation,
 
   css: ['~/assets/css/main.css'],
 
@@ -37,6 +50,7 @@ export default defineNuxtConfig({
   experimental: {
     scanPageMeta: true,
     extraPageMetaExtractionKeys: ['languageMapping'],
+    asyncContext: true,
   },
 
   compatibilityDate: '2025-04-19',

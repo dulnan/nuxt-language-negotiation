@@ -1,6 +1,24 @@
 import { PageExtender, type LanguageLinksMap } from './PageExtender'
 import { defineLanguageNegotiator } from './../defineLanguageNegotiator'
 import { extendPages } from '@nuxt/kit'
+import type { NuxtPage } from 'nuxt/schema'
+
+function buildTemplate(links: LanguageLinksMap, routes: NuxtPage[]): string {
+  const routeNamesWithoutMapping = routes
+    .map((v) => (v.name && !v.name.includes('___') ? v.name : null))
+    .filter(Boolean)
+
+  const routeNamesWithLanguageParam = routes
+    .map((v) => (v.path.includes(':langPrefix') && v.name ? v.name : null))
+    .filter(Boolean)
+
+  return `
+export const pageLanguageLinks = Object.freeze(${JSON.stringify(links, null, 2)});
+export const routeNamesWithoutMapping = Object.freeze(${JSON.stringify(routeNamesWithoutMapping)});
+export const routeNamesWithLanguageParam = Object.freeze(${JSON.stringify(routeNamesWithLanguageParam)});
+
+`
+}
 
 /**
  * Negotiates the language based on a path prefix.
@@ -17,25 +35,25 @@ export default defineLanguageNegotiator<{
     'languageMapping',
   )
 
-  const state: { links: LanguageLinksMap } = {
-    links: {},
+  const state: { template: string } = {
+    template: '',
   }
 
   helper.addTemplate({
     options: {
-      name: 'language-links',
+      name: 'routes',
     },
     build() {
-      return () => {
-        return `export const pageLanguageLinks = ${JSON.stringify(state.links, null, 2)}`
-      }
+      return () => state.template
     },
     buildTypes() {
       return `import type { RouteLocationRaw } from 'vue-router'
-import type { ValidLanguage } from '#nuxt-language-negotiation/config'
+import type { Langcode } from '#nuxt-language-negotiation/config'
 
-declare module '#nuxt-language-negotiation/language-links' {
-  export const pageLanguageLinks: Record<string, Partial<Record<ValidLanguage, RouteLocationRaw>>>
+declare module '#nuxt-language-negotiation/routes' {
+  export const pageLanguageLinks: Readonly<Record<string, Partial<Record<Langcode, RouteLocationRaw>>>>;
+  export const routeNamesWithLanguageParam: Readonly<string[]>;
+  export const routeNamesWithoutMapping: Readonly<string[]>;
 }`
     },
   })
@@ -43,7 +61,7 @@ declare module '#nuxt-language-negotiation/language-links' {
   extendPages((pages) => {
     const extender = new PageExtender(helper)
     const translated = extender.extend(pages)
-    state.links = extender.getLanguageLinks()
+    state.template = buildTemplate(extender.getLanguageLinks(), translated)
     pages.length = 0
     pages.push(...translated)
     extender.logMessagesToConsole()

@@ -9,23 +9,13 @@ import {
   type Resolver,
 } from '@nuxt/kit'
 import { relative } from 'pathe'
-import type { Nuxt, ResolvedNuxtTemplate } from 'nuxt/schema'
+import type { Nuxt, NuxtPlugin, ResolvedNuxtTemplate } from 'nuxt/schema'
+import type { LanguageBase } from './../../runtime/types'
 import type { ModuleOptions } from './../types'
 import { defu } from 'defu'
-import {
-  defaultOptions,
-  fileExists,
-  logger,
-  validateOptions,
-} from './../helpers'
+import { fileExists, logger } from './../helpers'
 import type { ModuleTemplate } from './../templates/defineTemplate'
-
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
-
-type RequiredModuleOptions = WithRequired<
-  ModuleOptions,
-  keyof typeof defaultOptions
->
+import ISO6391 from 'iso-639-1'
 
 type ModuleHelperResolvers = {
   /**
@@ -81,13 +71,18 @@ export class ModuleHelper {
   public readonly paths: ModuleHelperPaths
 
   public readonly isDev: boolean
-
-  public readonly options: RequiredModuleOptions
+  public readonly debug: boolean
 
   private serverNegotiators: ServerNegotiator[] = []
 
   private nitroExternals: string[] = []
   private tsPaths: Record<string, string> = {}
+
+  public readonly languages: LanguageBase[]
+  public readonly defaultLanguage: LanguageBase
+  public readonly defaultLanguageNoPrefix: boolean
+  public readonly prefixToLangcode: Record<string, string>
+  public readonly langcodeToPrefix: Record<string, string>
 
   constructor(
     public nuxt: Nuxt,
@@ -97,31 +92,60 @@ export class ModuleHelper {
     const isModuleBuild =
       process.env.PLAYGROUND_MODULE_BUILD === 'true' && nuxt.options._prepare
 
-    const mergedOptions = defu({}, options, defaultOptions)
+    const mergedOptions = defu(options)
+
     // When running dev:prepare during module development we have to "fake"
     // options to use the playground.
     if (isModuleBuild) {
-      mergedOptions.availableLanguages = ['de', 'en', 'fr', 'it']
+      mergedOptions.languages = ['de', 'en', 'fr', 'it']
     }
 
-    if (!mergedOptions.availableLanguages.length) {
+    if (!mergedOptions.languages.length) {
       throw new Error('At least one language is required.')
     }
 
-    if (!mergedOptions.defaultLanguage) {
-      mergedOptions.defaultLanguage = mergedOptions.availableLanguages[0]
-    }
+    this.languages = mergedOptions.languages
+      .map((v) => {
+        if (typeof v === 'string') {
+          return {
+            code: v,
+          }
+        }
+
+        return v
+      })
+      .map((language) => {
+        const label = language.label || ISO6391.getNativeName(language.code)
+        if (!label) {
+          throw new Error(
+            `Failed to determine label for language "${language.code}". Please provide a label in nuxt.config.ts.`,
+          )
+        }
+        return {
+          code: language.code,
+          prefix: language.prefix ?? language.code,
+          label,
+        }
+      })
+
+    this.defaultLanguage = this.languages[0]!
+    this.defaultLanguageNoPrefix = this.languages[0]!.prefix === ''
+    this.debug = !!options.debug
+    this.prefixToLangcode = Object.fromEntries(
+      this.languages.map((v) => {
+        return [v.prefix, v.code]
+      }),
+    )
+
+    this.langcodeToPrefix = Object.fromEntries(
+      this.languages.map((v) => {
+        return [v.code, v.prefix]
+      }),
+    )
 
     // Resolver for the root directory.
     const srcResolver = createResolver(nuxt.options.srcDir)
     const rootResolver = createResolver(nuxt.options.rootDir)
-
-    this.options = mergedOptions as RequiredModuleOptions
-
-    // Will throw an error if the options are not valid.
-    if (!nuxt.options._prepare) {
-      validateOptions(this.options)
-    }
 
     this.isDev = nuxt.options.dev
     this.resolvers = {
@@ -269,10 +293,16 @@ export class ModuleHelper {
     }
   }
 
-  public addPlugin(name: string) {
-    addPlugin(this.resolvers.module.resolve('./runtime/app/plugins/' + name), {
-      append: false,
-    })
+  public addPlugin(name: string, mode: NuxtPlugin['mode'] = 'all') {
+    addPlugin(
+      {
+        src: this.resolvers.module.resolve('./runtime/app/plugins/' + name),
+        mode,
+      },
+      {
+        append: false,
+      },
+    )
   }
 
   public addServerMiddleware(name: string) {

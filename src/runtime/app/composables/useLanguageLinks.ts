@@ -9,18 +9,18 @@ import {
   onBeforeUnmount,
 } from '#imports'
 import {
-  type ValidLanguage,
+  type Langcode,
   type LanguageLink,
   languages,
 } from '#nuxt-language-negotiation/config'
-import { pageLanguageLinks } from '#nuxt-language-negotiation/language-links'
+import { pageLanguageLinks } from '#nuxt-language-negotiation/routes'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
 /**
  * Return the current language.
  */
 export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
-  const stateLinks = useState<Record<string, Record<ValidLanguage, string>>>(
+  const stateLinks = useState<Record<string, Record<Langcode, string>>>(
     'pageLanguageLinks',
     () => {
       return {}
@@ -50,25 +50,26 @@ export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
 
   onBeforeUnmount(removeGuard)
 
-  const mapping = computed<
-    Partial<Record<ValidLanguage, any>> | null | undefined
-  >(() => {
-    if (stateLinks.value[currentRoutePath.value]) {
-      return stateLinks.value[currentRoutePath.value]
-    } else if (currentRouteName.value) {
-      return pageLanguageLinks[currentRouteName.value] || null
-    }
+  const mapping = computed<Partial<Record<Langcode, any>> | null | undefined>(
+    () => {
+      if (stateLinks.value[currentRoutePath.value]) {
+        return stateLinks.value[currentRoutePath.value]
+      } else if (currentRouteName.value) {
+        return pageLanguageLinks[currentRouteName.value] || null
+      }
 
-    return null
-  })
+      return null
+    },
+  )
 
   return computed<LanguageLink[]>(() => {
     if (mapping.value) {
-      return languages.map((code) => {
+      return languages.map((language) => {
+        const code = language.code
         const to = mapping.value?.[code]
         if (to) {
           return {
-            code,
+            ...language,
             enabled: true,
             to,
             active: code === currentLanguage.value,
@@ -76,7 +77,7 @@ export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
         }
 
         return {
-          code,
+          ...language,
           enabled: false,
           to: undefined,
           active: code === currentLanguage.value,
