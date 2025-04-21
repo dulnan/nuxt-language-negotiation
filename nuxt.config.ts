@@ -13,7 +13,7 @@ export default defineNuxtConfig({
       pathPrefix(),
       query({
         keys: ['language'],
-      }) as any,
+      }),
       cookie(),
       acceptLanguage(),
     ],

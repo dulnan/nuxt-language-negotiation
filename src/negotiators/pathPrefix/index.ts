@@ -22,10 +22,8 @@ export const routeNamesWithLanguageParam = Object.freeze(${JSON.stringify(routeN
 /**
  * Negotiates the language based on a path prefix.
  */
-export default defineLanguageNegotiator<{
-  defaultLanguageNoPrefix?: boolean
-}>('pathPrefix', (helper, options) => {
-  helper.addServerNegotiator('pathPrefix', options)
+export default defineLanguageNegotiator('pathPrefix', (helper) => {
+  helper.addServerNegotiator('pathPrefix')
   helper.addPlugin('router')
 
   // Only do this when all languages have a prefix.

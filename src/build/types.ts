@@ -1,7 +1,7 @@
 import type { LanguageBase } from '../runtime/types'
 import type { ModuleHelper } from './classes/ModuleHelper'
 
-export type LanguageNegotiatorDefinition<T extends object = object> = {
+export type LanguageNegotiatorDefinition<T = any> = {
   name: string
   options: T
   init: (helper: ModuleHelper, options: T) => void
