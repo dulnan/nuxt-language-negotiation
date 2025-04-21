@@ -16,7 +16,6 @@ function buildTemplate(links: LanguageLinksMap, routes: NuxtPage[]): string {
 export const pageLanguageLinks = Object.freeze(${JSON.stringify(links, null, 2)});
 export const routeNamesWithoutMapping = Object.freeze(${JSON.stringify(routeNamesWithoutMapping)});
 export const routeNamesWithLanguageParam = Object.freeze(${JSON.stringify(routeNamesWithLanguageParam)});
-
 `
 }
 
@@ -29,6 +28,18 @@ export default defineLanguageNegotiator<{
   helper.addServerNegotiator('pathPrefix', options)
   helper.addPlugin('router')
 
+  // Only do this when all languages have a prefix.
+  if (!helper.defaultLanguageNoPrefix) {
+    // Handle the redirect already on the server.
+    helper.addServerMiddleware('frontRedirect')
+    helper.addServerMiddleware('noPrefixRedirect')
+
+    // The plugin is only needs to run on the client.
+    helper.addPlugin('frontRedirect', 'client')
+  }
+
+  // This allows us to access the languageMapping meta property inside
+  // extendPages().
   helper.nuxt.options.experimental.scanPageMeta = true
   helper.nuxt.options.experimental.extraPageMetaExtractionKeys ||= []
   helper.nuxt.options.experimental.extraPageMetaExtractionKeys.push(
@@ -44,7 +55,7 @@ export default defineLanguageNegotiator<{
       name: 'routes',
     },
     build() {
-      return () => state.template
+      return () => state.template.trim()
     },
     buildTypes() {
       return `import type { RouteLocationRaw } from 'vue-router'

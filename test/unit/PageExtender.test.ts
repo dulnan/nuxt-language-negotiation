@@ -3,7 +3,7 @@ import {
   PageExtender,
   type BuiltPage,
 } from './../../src/negotiators/pathPrefix/PageExtender'
-import { ModuleOptionsLanguages } from '../../src/build/types'
+import type { ModuleOptionsLanguages } from '../../src/build/types'
 
 type PartialNuxtPage = {
   path: string

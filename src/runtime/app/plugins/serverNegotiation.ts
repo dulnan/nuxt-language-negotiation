@@ -9,8 +9,6 @@ export default defineNuxtPlugin({
   async setup(app) {
     if (import.meta.server) {
       const event = app.ssrContext?.event
-      console.log('PLUGIN')
-      console.log(event?.context)
       if (event) {
         // This will store the language in the context.
         await useCurrentLanguageServer(event)
