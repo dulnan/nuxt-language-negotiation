@@ -11,11 +11,82 @@ import {
 import { relative } from 'pathe'
 import type { Nuxt, NuxtPlugin, ResolvedNuxtTemplate } from 'nuxt/schema'
 import type { LanguageBase } from './../../runtime/types'
-import type { ModuleOptions } from './../types'
+import type { ModuleOptions, ModuleOptionsLanguages } from './../types'
 import { defu } from 'defu'
 import { fileExists, logger } from './../helpers'
 import type { ModuleTemplate } from './../templates/defineTemplate'
 import ISO6391 from 'iso-639-1'
+
+/**
+ * Validate and build the language options.
+ */
+function buildLanguageOptions(rawLanguages: ModuleOptionsLanguages): {
+  languages: LanguageBase[]
+  defaultLanguage: LanguageBase
+  defaultLanguageNoPrefix: boolean
+} {
+  if (!rawLanguages || rawLanguages.length === 0) {
+    throw new Error('At least one language is required.')
+  }
+
+  // Normalize to objects
+  const mapped = rawLanguages.map((v) =>
+    typeof v === 'string' ? { code: v } : { ...v },
+  )
+
+  // Enrich with label & prefix
+  const languages: LanguageBase[] = mapped.map<LanguageBase>((lang) => {
+    const { code } = lang
+    if (!code) {
+      throw new Error(`Language entry is missing a code.`)
+    }
+
+    if (!/^[A-Za-z_-]+$/.test(code)) {
+      throw new Error(
+        `Invalid language code "${code}". Only letters, underscore and hyphen are allowed.`,
+      )
+    }
+
+    const prefix = lang.prefix ?? code
+    if (!/^[A-Za-z_-]*$/.test(prefix)) {
+      throw new Error(
+        `Invalid prefix "${prefix}" for language "${code}". Only letters, underscore and hyphen are allowed.`,
+      )
+    }
+
+    const label = lang.label || ISO6391.getNativeName(code)
+    if (!label) {
+      throw new Error(
+        `Failed to determine label for language "${code}". Please provide a label.`,
+      )
+    }
+
+    return { code, prefix, label }
+  })
+
+  // Check uniqueness of codes & prefixes
+  const codes = languages.map((l) => l.code)
+  const prefixes = languages.map((l) => l.prefix)
+  const duplicateCodes = codes.filter((c, i) => codes.indexOf(c) !== i)
+  const duplicatePrefixes = prefixes.filter((p, i) => prefixes.indexOf(p) !== i)
+  if (duplicateCodes.length) {
+    throw new Error(
+      `Duplicate language codes found: ${[...new Set(duplicateCodes)].join(', ')}`,
+    )
+  }
+  if (duplicatePrefixes.length) {
+    throw new Error(
+      `Duplicate language prefixes found: ${[
+        ...new Set(duplicatePrefixes),
+      ].join(', ')}`,
+    )
+  }
+
+  const defaultLanguage = languages[0]!
+  const defaultLanguageNoPrefix = defaultLanguage.prefix === ''
+
+  return { languages, defaultLanguage, defaultLanguageNoPrefix }
+}
 
 type ModuleHelperResolvers = {
   /**
@@ -100,36 +171,12 @@ export class ModuleHelper {
       mergedOptions.languages = ['de', 'en', 'fr', 'it']
     }
 
-    if (!mergedOptions.languages.length) {
-      throw new Error('At least one language is required.')
-    }
+    const { languages, defaultLanguage, defaultLanguageNoPrefix } =
+      buildLanguageOptions(mergedOptions.languages)
+    this.languages = languages
+    this.defaultLanguage = defaultLanguage
+    this.defaultLanguageNoPrefix = defaultLanguageNoPrefix
 
-    this.languages = mergedOptions.languages
-      .map((v) => {
-        if (typeof v === 'string') {
-          return {
-            code: v,
-          }
-        }
-
-        return v
-      })
-      .map((language) => {
-        const label = language.label || ISO6391.getNativeName(language.code)
-        if (!label) {
-          throw new Error(
-            `Failed to determine label for language "${language.code}". Please provide a label in nuxt.config.ts.`,
-          )
-        }
-        return {
-          code: language.code,
-          prefix: language.prefix ?? language.code,
-          label,
-        }
-      })
-
-    this.defaultLanguage = this.languages[0]!
-    this.defaultLanguageNoPrefix = this.languages[0]!.prefix === ''
     this.debug = !!options.debug
     this.prefixToLangcode = Object.fromEntries(
       this.languages.map((v) => {

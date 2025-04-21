@@ -13,18 +13,27 @@ export type BuildLanguageLinks = {
 
 export type LanguageLinksMap = Record<string, Record<string, RouteLocationRaw>>
 
+export type BuiltPage = {
+  originalName: string
+  newName: string
+  path: string
+  langcodes: string[]
+}
+
 // The regex to match a path that is used as a "catch all" route.
 const CATCH_ALL_REGEX = /^\/:([A-Za-z0-9]+)\(\.\*\)\*$/
 
 export class PageExtender {
   private readonly languageLinks: BuildLanguageLinks[] = []
+  private readonly allLangcodes: string[]
   private languageParam: string
-  private logMessages: [string, string][] = []
+  private builtPages: BuiltPage[] = []
 
   constructor(private helper: ModuleHelper) {
     const nonDefaultLanguages = helper.languages.filter(
       (v) => v.code !== this.helper.defaultLanguage.code,
     )
+    this.allLangcodes = helper.languages.map((v) => v.code)
 
     // If the default language has no prefix, we need to adjust the param:
     // The default language is removed from the possible param values and
@@ -53,6 +62,7 @@ export class PageExtender {
       // Catch all.
       if (!parentPath && page.path.match(CATCH_ALL_REGEX)) {
         extended.push(page)
+        this.addBuiltPage(page.path, this.allLangcodes, originalName)
         continue
       }
 
@@ -89,12 +99,18 @@ export class PageExtender {
               : undefined,
             meta: { ...(page.meta || {}), originalName: page.name },
           })
+          this.addBuiltPage(
+            absPath,
+            [onlyLanguage.code],
+            originalName,
+            translatedName,
+          )
           continue
         }
 
         // Top level with language param.
         const shared = cleanPagePath(
-          `/${this.languageParam}${getFullPagePath(page.path, '')}`,
+          `/${this.languageParam}${getFullPagePath(page.path, parentPath)}`,
         )
 
         for (const lang of this.helper.languages) {
@@ -113,10 +129,11 @@ export class PageExtender {
           ...page,
           path: shared,
           children: page.children
-            ? this.extend(page.children, getFullPagePath(page.path, ''))
+            ? this.extend(page.children, getFullPagePath(page.path, parentPath))
             : undefined,
           meta: { ...(page.meta || {}), originalName: page.name },
         })
+        this.addBuiltPage(shared, this.allLangcodes, originalName)
         continue
       }
 
@@ -163,11 +180,25 @@ export class PageExtender {
             originalName,
           },
         })
+        this.addBuiltPage(absPath, [lang.code], originalName, routeName)
       }
     }
 
-    this.addPagesToLog(extended)
     return extended
+  }
+
+  private addBuiltPage(
+    path: string,
+    langcodes: string[],
+    originalName: string,
+    newName?: string,
+  ) {
+    this.builtPages.push({
+      originalName,
+      newName: newName || originalName,
+      path,
+      langcodes,
+    })
   }
 
   private addLanguageLink(
@@ -184,14 +215,8 @@ export class PageExtender {
     })
   }
 
-  private addPagesToLog(pages: NuxtPage[]) {
-    if (!this.helper.debug) {
-      return
-    }
-
-    for (const page of pages) {
-      this.logMessages.push([page.name || '', page.path])
-    }
+  public getBuiltPages(): BuiltPage[] {
+    return this.builtPages.sort((a, b) => b.newName.localeCompare(a.newName))
   }
 
   public logMessagesToConsole() {
@@ -199,8 +224,8 @@ export class PageExtender {
       return
     }
 
-    const longestName = this.logMessages.reduce((max, message) => {
-      const name = message[0]
+    const longestName = this.builtPages.reduce((max, item) => {
+      const name = item.newName
       if (name.length > max) {
         return name.length
       }
@@ -208,9 +233,9 @@ export class PageExtender {
       return max
     }, 0)
 
-    const messages = this.logMessages
-      .map(([name, path]) => {
-        return `${name.padEnd(longestName + 1)} | ${path}`
+    const messages = this.builtPages
+      .map((page) => {
+        return `${page.newName.padEnd(longestName + 1)} | ${page.path}`
       })
       .sort()
 

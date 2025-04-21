@@ -7,7 +7,11 @@ export type LanguageNegotiatorDefinition<T extends object = object> = {
   init: (helper: ModuleHelper, options: T) => void
 }
 
-type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>
+export type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>
+
+export type ModuleOptionsLanguages = Array<
+  Optional<LanguageBase, 'prefix' | 'label'> | string
+>
 
 export type ModuleOptions = {
   /**
@@ -16,7 +20,7 @@ export type ModuleOptions = {
    * In general this is a two character code (e.g. 'en', 'de' or 'fr'), but you
    * can also use locale style codes ('de-DE', 'en-GB', etc.).
    */
-  languages: Array<Optional<LanguageBase, 'prefix' | 'label'> | string>
+  languages: ModuleOptionsLanguages
 
   /**
    * Available negotiators.
