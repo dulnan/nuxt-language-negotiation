@@ -1,6 +1,6 @@
 {
   "name": "nuxt-language-negotiation",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "description": "Simple language negotiation for Nuxt 3.",
   "repository": "github:dulnan/nuxt-language-negotiation",
   "keywords": [
@@ -44,7 +44,7 @@
   ],
   "scripts": {
     "prepack": "nuxt-module-build build",
-    "dev": "nuxi dev playground",
+    "dev": "PLAYGROUND_DEV=true nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "PLAYGROUND_MODULE_BUILD=true nuxt-module-build build --stub && PLAYGROUND_MODULE_BUILD=true nuxt-module-build prepare && nuxi prepare playground",
@@ -55,11 +55,13 @@
     "docs:serve": "vitepress serve docs --port 5000",
     "prettier": "prettier ./src --check",
     "prettier:fix": "prettier ./src --write",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
     "test": "vitest run",
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "accept-language-parser": "^1.5.0",
+    "intl-parse-accept-language": "^1.0.0",
     "iso-639-1": "^3.1.5"
   },
   "devDependencies": {

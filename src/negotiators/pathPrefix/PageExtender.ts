@@ -2,7 +2,7 @@ import type { NuxtPage } from 'nuxt/schema'
 import type { ModuleHelper } from './../../build/classes/ModuleHelper'
 import type { RouteLocationRaw } from 'vue-router'
 import { cleanPagePath, getFullPagePath } from '../../build/helpers/pages'
-import { logger } from '../../build/helpers'
+import { logger, nonNullish } from '../../build/helpers'
 import type { LanguageBase } from '../../runtime/types'
 
 export type BuildLanguageLinks = {
@@ -28,6 +28,8 @@ export class PageExtender {
   private readonly allLangcodes: string[]
   private languageParam: string
   private builtPages: BuiltPage[] = []
+  private invalidPrefixes: string[] = []
+  private hasAnyErrors = false
 
   constructor(private helper: ModuleHelper) {
     const nonDefaultLanguages = helper.languages.filter(
@@ -35,12 +37,34 @@ export class PageExtender {
     )
     this.allLangcodes = helper.languages.map((v) => v.code)
 
+    this.invalidPrefixes = helper.languages
+      .flatMap((v) => {
+        if (v.prefix) {
+          return ['/' + v.prefix + '/']
+        }
+        return null
+      })
+      .filter(nonNullish)
+
     // If the default language has no prefix, we need to adjust the param:
     // The default language is removed from the possible param values and
     // the entire param is optional.
     this.languageParam = this.helper.defaultLanguageNoPrefix
       ? `:langPrefix(${nonDefaultLanguages.map((v) => v.prefix).join('|')})?`
       : `:langPrefix(${helper.languages.map((v) => v.prefix).join('|')})`
+  }
+
+  private isPathValid(path: string): boolean {
+    const invalidPart = this.invalidPrefixes.find((v) => path.startsWith(v))
+    if (invalidPart) {
+      logger.error(
+        `The path "${path}" is not valid because it starts with "${invalidPart}", which is an existing language prefix.`,
+      )
+      this.hasAnyErrors = true
+      return false
+    }
+
+    return true
   }
 
   public extend(
@@ -53,10 +77,15 @@ export class PageExtender {
     for (const page of pages) {
       const originalName = page.name
       if (!originalName) {
-        throw new Error(
-          `Missing name in page "${page.path}". ` +
-            'nuxt-language-negotiation requires every page to have a name.',
+        logger.error(
+          `Missing name in page "${page.file || page.path}". nuxt-language-negotiation requires every page to have a name.`,
         )
+        this.hasAnyErrors = true
+        continue
+      }
+
+      if (!this.isPathValid(page.path)) {
+        continue
       }
 
       // Catch all.
@@ -154,6 +183,10 @@ export class PageExtender {
           continue
 
         const segment = mapping[lang.code] ?? page.path
+        if (!this.isPathValid(segment)) {
+          continue
+        }
+
         const relative = getFullPagePath(segment, parentPath)
         const absPath = cleanPagePath(
           lang.code === this.helper.defaultLanguage.code &&
@@ -233,15 +266,35 @@ export class PageExtender {
       return max
     }, 0)
 
-    const messages = this.builtPages
-      .map((page) => {
-        return `${page.newName.padEnd(longestName + 1)} | ${page.path}`
-      })
-      .sort()
+    const longestPath = this.builtPages.reduce((max, item) => {
+      const path = item.path
+      if (path.length > max) {
+        return path.length
+      }
 
-    messages.forEach((message) => {
-      logger.log(message)
-    })
+      return max
+    }, 0)
+
+    const messages = [
+      ['New name', 'Path'],
+      ...this.builtPages
+        .sort((a, b) => a.newName.localeCompare(b.newName))
+        .map((page) => [page.newName, page.path]),
+    ].map((cells) => `${cells[0]!.padEnd(longestName + 1)} │ ${cells[1]}`)
+    messages.splice(
+      1,
+      0,
+      '─'.repeat(longestName + 2) + '┼' + '─'.repeat(longestPath + 2),
+    )
+    messages.unshift(
+      '─'.repeat(longestName + 2) + '┬' + '─'.repeat(longestPath + 2),
+    )
+    messages.unshift('Translated the following pages:\n')
+    logger.box(messages.join('\n'))
+  }
+
+  public hasError(): boolean {
+    return this.hasAnyErrors
   }
 
   public getLanguageLinks(): LanguageLinksMap {

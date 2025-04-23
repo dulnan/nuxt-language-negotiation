@@ -21,7 +21,7 @@ import {
  */
 export default defineNuxtPlugin({
   name: 'nuxt-language-negotiation:router',
-  dependsOn: ['nuxt-language-negotiation:server-negotiation', 'nuxt:router'],
+  dependsOn: ['nuxt:router'],
   setup() {
     const router = useRouter()
     const currentLanguage = useCurrentLanguage()

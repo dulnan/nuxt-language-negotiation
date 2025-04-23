@@ -39,3 +39,13 @@ export function toValidVariableName(input: string): string {
 
   return result
 }
+
+/**
+ * Type check for falsy values.
+ *
+ * Used as the callback for array.filter, e.g.
+ * items.filter(falsy)
+ */
+export function nonNullish<T>(value: T): value is NonNullable<T> {
+  return value !== null && value !== undefined
+}

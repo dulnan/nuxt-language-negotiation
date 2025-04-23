@@ -6,9 +6,9 @@ import type { H3Event } from 'h3'
 import { serverOptions, negotiators } from '#nuxt-language-negotiation/server'
 import { isValidLanguage } from '../../helpers/isValidLanguage'
 
-async function negotiate(event: H3Event): Promise<Langcode> {
+function negotiate(event: H3Event): Langcode {
   if (serverOptions.negotiate) {
-    const result = await serverOptions.negotiate(event)
+    const result = serverOptions.negotiate(event)
     if (isValidLanguage(result)) {
       return result
     }
@@ -24,12 +24,12 @@ async function negotiate(event: H3Event): Promise<Langcode> {
   return defaultLangcode
 }
 
-export async function useCurrentLanguage(event: H3Event): Promise<Langcode> {
+export function useCurrentLanguage(event: H3Event): Langcode {
   if (event.context.negotiatedLanguage) {
     return event.context.negotiatedLanguage
   }
 
-  const language = await negotiate(event)
+  const language = negotiate(event)
   event.context.negotiatedLanguage = language
   return language
 }

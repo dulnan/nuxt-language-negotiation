@@ -30,7 +30,6 @@ export default defineLanguageNegotiator('pathPrefix', (helper) => {
   if (!helper.defaultLanguageNoPrefix) {
     // Handle the redirect already on the server.
     helper.addServerMiddleware('frontRedirect')
-    helper.addServerMiddleware('noPrefixRedirect')
 
     // The plugin is only needs to run on the client.
     helper.addPlugin('frontRedirect', 'client')
@@ -60,8 +59,19 @@ export default defineLanguageNegotiator('pathPrefix', (helper) => {
 import type { Langcode } from '#nuxt-language-negotiation/config'
 
 declare module '#nuxt-language-negotiation/routes' {
+  /**
+   * The page language links determined at build time.
+   */
   export const pageLanguageLinks: Readonly<Record<string, Partial<Record<Langcode, RouteLocationRaw>>>>;
+
+  /**
+   * Names of routes that have a "catch all" language param.
+   */
   export const routeNamesWithLanguageParam: Readonly<string[]>;
+
+  /**
+   * Names of routes that do not have language mapping.
+   */
   export const routeNamesWithoutMapping: Readonly<string[]>;
 }`
     },
@@ -70,6 +80,9 @@ declare module '#nuxt-language-negotiation/routes' {
   extendPages((pages) => {
     const extender = new PageExtender(helper)
     const translated = extender.extend(pages)
+    if (extender.hasError() && !helper.isDev) {
+      throw new Error('Failed to translate pages.')
+    }
     state.template = buildTemplate(extender.getLanguageLinks(), translated)
     pages.length = 0
     pages.push(...translated)

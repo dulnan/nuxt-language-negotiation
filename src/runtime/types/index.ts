@@ -17,9 +17,7 @@ export type LanguageLinkBase<T extends string = string> = {
 } & (LanguageLinkAvailable | LanguageLinkDisabled)
 
 export type ServerOptions<T extends string = string> = {
-  negotiate?: (
-    event: H3Event,
-  ) => T | null | undefined | Promise<T | null | undefined>
+  negotiate?: (event: H3Event) => T | null | undefined
 }
 
 export type BuiltInNegotiators =

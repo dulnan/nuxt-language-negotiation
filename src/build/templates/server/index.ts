@@ -18,10 +18,12 @@ export default defineTemplate(
     const negotiators = helper.getServerNegotiators()
 
     const mapped = negotiators.map((negotiator) => {
-      const importPath = relative(
-        helper.paths.moduleBuildDir,
-        negotiator.filePath,
-      )
+      // When we are in dev mode in the module's playground we have to import the
+      // actual ts file from the src folder. However once its built and in use,
+      // we need to import the compiled js file.
+      const suffix = helper.isPlaygroundDev ? '.ts' : '.js'
+      const importPath =
+        relative(helper.paths.moduleBuildDir, negotiator.filePath) + suffix
       const variableName = toValidVariableName(negotiator.name)
 
       const importLine = `import ${variableName} from '${importPath}'`
@@ -50,7 +52,14 @@ import type { ServerOptions, ServerNegotiator } from '${helper.paths.runtimeType
 import type { Langcode } from '#nuxt-language-negotiation/config'
 
 declare module '#nuxt-language-negotiation/server' {
+  /**
+   * The user-provided server options.
+   */
   export const serverOptions: ServerOptions<Langcode>
+
+  /**
+   * The available server negotiator instances.
+   */
   export const negotiators: ServerNegotiator[]
 }
 `

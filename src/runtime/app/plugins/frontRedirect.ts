@@ -13,7 +13,7 @@ import { langcodeToPrefix } from '#nuxt-language-negotiation/config'
  */
 export default defineNuxtPlugin({
   name: 'nuxt-language-negotiation:front-redirect',
-  dependsOn: ['nuxt-language-negotiation:server-negotiation', 'nuxt:router'],
+  dependsOn: ['nuxt:router'],
   async setup() {
     if (import.meta.client) {
       const route = useRoute()

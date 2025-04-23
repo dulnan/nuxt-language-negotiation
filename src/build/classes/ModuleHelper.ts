@@ -142,6 +142,7 @@ export class ModuleHelper {
   public readonly paths: ModuleHelperPaths
 
   public readonly isDev: boolean
+  public readonly isPlaygroundDev: boolean
   public readonly debug: boolean
 
   private serverNegotiators: ServerNegotiator[] = []
@@ -162,6 +163,8 @@ export class ModuleHelper {
   ) {
     const isModuleBuild =
       process.env.PLAYGROUND_MODULE_BUILD === 'true' && nuxt.options._prepare
+
+    this.isPlaygroundDev = process.env.PLAYGROUND_DEV === 'true'
 
     const mergedOptions = defu(options)
 
@@ -274,6 +277,7 @@ export class ModuleHelper {
 
     // Add the alias as an external so that the nitro server build doesn't fail.
     this.inlineNitroExternals(name)
+    this.inlineNitroExternals(path)
   }
 
   public inlineNitroExternals(arg: ResolvedNuxtTemplate | string) {

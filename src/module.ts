@@ -22,7 +22,6 @@ export default defineNuxtModule<ModuleOptions>({
     helper.addComposable('useCurrentLanguage')
     helper.addComposable('useLanguageLinks')
     helper.addComposable('definePageLanguageLinks')
-    helper.addPlugin('serverNegotiation')
     helper.addServerUtil('useCurrentLanguage')
     helper.addAlias('#nuxt-language-negotiation', helper.paths.moduleBuildDir)
 

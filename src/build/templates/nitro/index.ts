@@ -14,6 +14,9 @@ import type { Langcode } from '#nuxt-language-negotiation/config'
 
 declare module 'h3' {
   export interface H3EventContext {
+    /**
+     * The negotiated language.
+     */
     negotiatedLanguage?: Langcode
   }
 }

@@ -13,4 +13,8 @@ export default defineBuildConfig({
     '#nuxt-language-negotiation/server',
     'iso-639-1',
   ],
+  replace: {
+    'process.env.PLAYGROUND_MODULE_BUILD': 'undefined',
+    'process.env.PLAYGROUND_DEV': 'undefined',
+  },
 })
