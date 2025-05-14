@@ -12,7 +12,7 @@ export default defineNuxtModule<ModuleOptions>({
     configKey: 'languageNegotiation',
     version: '2.0.0',
     compatibility: {
-      nuxt: '^3.16.0',
+      nuxt: '^3.17.0',
     },
   },
   setup(passedOptions, nuxt) {
