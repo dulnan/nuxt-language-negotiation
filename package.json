@@ -1,6 +1,6 @@
 {
   "name": "nuxt-language-negotiation",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Simple language negotiation for Nuxt 3.",
   "repository": "github:dulnan/nuxt-language-negotiation",
   "keywords": [
