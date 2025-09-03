@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'url'
+import { name, version } from '../package.json'
 import { defineNuxtModule } from '@nuxt/kit'
 import type { ModuleOptions } from './build/types'
 import { ModuleHelper } from './build/classes/ModuleHelper'
@@ -8,11 +9,11 @@ export type { ModuleOptions }
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'nuxt-language-negotiation',
+    name,
     configKey: 'languageNegotiation',
-    version: '2.0.0',
+    version,
     compatibility: {
-      nuxt: '^3.17.0',
+      nuxt: '>=3.17.0',
     },
   },
   setup(passedOptions, nuxt) {
