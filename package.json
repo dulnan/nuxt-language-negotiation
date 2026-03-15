@@ -2,6 +2,7 @@
   "name": "nuxt-language-negotiation",
   "version": "2.0.2",
   "description": "Simple language negotiation for Nuxt 3.",
+  "license": "MIT",
   "repository": "github:dulnan/nuxt-language-negotiation",
   "keywords": [
     "nuxt",
