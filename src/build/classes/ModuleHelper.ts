@@ -143,7 +143,6 @@ export class ModuleHelper {
   public readonly paths: ModuleHelperPaths
 
   public readonly isDev: boolean
-  public readonly isPlaygroundDev: boolean
   public readonly debug: boolean
 
   private serverNegotiators: ServerNegotiator[] = []
@@ -164,8 +163,6 @@ export class ModuleHelper {
   ) {
     const isModuleBuild =
       process.env.PLAYGROUND_MODULE_BUILD === 'true' && nuxt.options._prepare
-
-    this.isPlaygroundDev = process.env.PLAYGROUND_DEV === 'true'
 
     const mergedOptions = defu(options)
 

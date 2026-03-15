@@ -45,7 +45,7 @@
   ],
   "scripts": {
     "prepack": "nuxt-module-build build",
-    "dev": "PLAYGROUND_DEV=true nuxi dev playground",
+    "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "PLAYGROUND_MODULE_BUILD=true nuxt-module-build build --stub && PLAYGROUND_MODULE_BUILD=true nuxt-module-build prepare && nuxi prepare playground",

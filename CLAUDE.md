@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-npm run dev              # Run playground app (sets PLAYGROUND_DEV=true)
+npm run dev              # Run playground app
 npm run dev:prepare      # Prepare module stubs + playground (run after cloning or changing module structure)
 npm run dev:build        # Build playground for production
 npm run dev:serve        # Serve built playground
@@ -72,5 +72,5 @@ Configured under the `languageNegotiation` key in `nuxt.config.ts`. Users provid
 - Module requires Nuxt >=3.17.0 and supports Nuxt 4
 - The playground (`playground/`) is a full Nuxt app used for manual testing and development — start it with `npm run dev`
 - Unit tests live in `test/unit/` and use vitest with snapshot testing
-- The `PLAYGROUND_DEV` and `PLAYGROUND_MODULE_BUILD` env vars control special behavior during module development (see `ModuleHelper` constructor)
+- The `PLAYGROUND_MODULE_BUILD` env var controls special behavior during module development (see `ModuleHelper` constructor)
 - Server options file: users can create `server/languageNegotiation.serverOptions.ts` in their app to customize server-side behavior

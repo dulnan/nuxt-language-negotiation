@@ -2,17 +2,11 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { $fetch, setup } from '@nuxt/test-utils/e2e'
 
-// The module checks PLAYGROUND_DEV to determine whether to import runtime
-// server negotiators as .ts (source) or .js (built). Since tests run against
-// the source, we need this set before setup() builds the Nuxt app.
-process.env.PLAYGROUND_DEV = 'true'
-
 describe('LanguageOverride', async () => {
   await setup({
     rootDir: fileURLToPath(
       new URL('../fixtures/language-override', import.meta.url),
     ),
-    dev: true,
   })
 
   it('renders the route language when no override is present', async () => {

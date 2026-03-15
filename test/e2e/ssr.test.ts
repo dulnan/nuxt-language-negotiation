@@ -2,15 +2,11 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
 
-// Required so the module resolves runtime server negotiators as .ts source files.
-process.env.PLAYGROUND_DEV = 'true'
-
 describe('SSR', { timeout: 120_000 }, async () => {
   await setup({
     rootDir: fileURLToPath(
       new URL('../fixtures/language-override', import.meta.url),
     ),
-    dev: true,
   })
 
   describe('path prefix negotiation', () => {

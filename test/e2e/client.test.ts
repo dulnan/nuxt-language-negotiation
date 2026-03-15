@@ -2,9 +2,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { createPage, setup, url } from '@nuxt/test-utils/e2e'
 
-// Required so the module resolves runtime server negotiators as .ts source files.
-process.env.PLAYGROUND_DEV = 'true'
-
 describe(
   'Client-side',
   {
@@ -15,7 +12,6 @@ describe(
       rootDir: fileURLToPath(
         new URL('../fixtures/language-override', import.meta.url),
       ),
-      dev: true,
       browser: true,
       browserOptions: {
         type: 'chromium',

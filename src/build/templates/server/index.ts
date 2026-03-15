@@ -18,12 +18,10 @@ export default defineTemplate(
     const negotiators = helper.getServerNegotiators()
 
     const mapped = negotiators.map((negotiator) => {
-      // When we are in dev mode in the module's playground we have to import the
-      // actual ts file from the src folder. However once its built and in use,
-      // we need to import the compiled js file.
-      const suffix = helper.isPlaygroundDev ? '.ts' : '.js'
-      const importPath =
-        relative(helper.paths.moduleBuildDir, negotiator.filePath) + suffix
+      const importPath = relative(
+        helper.paths.moduleBuildDir,
+        negotiator.filePath,
+      )
       const variableName = toValidVariableName(negotiator.name)
 
       const importLine = `import ${variableName} from '${importPath}'`
