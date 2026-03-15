@@ -17,8 +17,7 @@ import { defu } from 'defu'
 import { fileExists, logger } from './../helpers'
 import type { ModuleTemplate } from './../templates/defineTemplate'
 import ISO6391 from 'iso-639-1'
-import type {NitroConfig} from 'nitropack/types'
-import type { NuxtConfig } from 'nuxt/schema'
+import type { NitroConfig } from 'nitropack/types'
 
 /**
  * Validate and build the language options.
@@ -295,7 +294,9 @@ export class ModuleHelper {
 
   public addComponent(name: string) {
     addComponent({
-      filePath: this.resolvers.module.resolve('./runtime/app/components/' + name),
+      filePath: this.resolvers.module.resolve(
+        './runtime/app/components/' + name,
+      ),
       name,
       global: true,
     })
@@ -322,8 +323,7 @@ export class ModuleHelper {
     this.nuxt.options.typescript.tsConfig.compilerOptions.paths ||= {}
 
     for (const [name, path] of Object.entries(this.tsPaths)) {
-      nitroConfig.typescript.tsConfig.compilerOptions.paths[name] =
-        [path]
+      nitroConfig.typescript.tsConfig.compilerOptions.paths[name] = [path]
       this.nuxt.options.typescript.tsConfig.compilerOptions.paths[name] = [path]
     }
   }
