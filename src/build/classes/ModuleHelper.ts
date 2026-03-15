@@ -303,27 +303,26 @@ export class ModuleHelper {
   }
 
   public applyBuildConfig() {
-    const nitroConfig = (this.nuxt.options as any).nitro as NitroConfig
-
     // Workaround for https://github.com/nuxt/nuxt/issues/28995
-    nitroConfig.externals ||= {}
-    nitroConfig.externals.inline ||= []
-    nitroConfig.externals.inline.push(...this.nitroExternals)
+    this.nuxt.options.nitro.externals ||= {}
+    this.nuxt.options.nitro.externals.inline ||= []
+    this.nuxt.options.nitro.externals.inline.push(...this.nitroExternals)
 
     // Currently needed due to a bug in Nuxt that does not add aliases for
     // nitro. As this has happened before in the past, let's leave it so that
     // we are guaranteed to have these aliases also for server types.
-    nitroConfig.typescript ||= {}
-    nitroConfig.typescript.tsConfig ||= {}
-    nitroConfig.typescript.tsConfig.compilerOptions ||= {}
-    nitroConfig.typescript.tsConfig.compilerOptions.paths ||= {}
+    this.nuxt.options.nitro.typescript ||= {}
+    this.nuxt.options.nitro.typescript.tsConfig ||= {}
+    this.nuxt.options.nitro.typescript.tsConfig.compilerOptions ||= {}
+    this.nuxt.options.nitro.typescript.tsConfig.compilerOptions.paths ||= {}
 
     this.nuxt.options.typescript.tsConfig ||= {}
     this.nuxt.options.typescript.tsConfig.compilerOptions ||= {}
     this.nuxt.options.typescript.tsConfig.compilerOptions.paths ||= {}
 
     for (const [name, path] of Object.entries(this.tsPaths)) {
-      nitroConfig.typescript.tsConfig.compilerOptions.paths[name] = [path]
+      this.nuxt.options.nitro.typescript.tsConfig.compilerOptions.paths[name] =
+        [path]
       this.nuxt.options.typescript.tsConfig.compilerOptions.paths[name] = [path]
     }
   }
