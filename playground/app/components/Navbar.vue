@@ -50,12 +50,20 @@
 
 <script lang="ts" setup>
 import { defaultLanguageNoPrefix } from '#nuxt-language-negotiation/config'
+import {
+  computed,
+  useRoute,
+  useCurrentLanguage,
+  useLanguageLinks,
+  useAsyncData,
+} from '#imports'
 
 const pages = computed(() => {
   return [
     { name: 'search' },
     { name: 'page-with-aliases' },
     { name: 'products' },
+    { name: 'language-override' },
     {
       path: defaultLanguageNoPrefix ? '/page-2-german' : '/de/page-2-german',
     },

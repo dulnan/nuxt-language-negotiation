@@ -23,7 +23,8 @@ export default defineNuxtModule<ModuleOptions>({
     helper.addComposable('useCurrentLanguage')
     helper.addComposable('useLanguageLinks')
     helper.addComposable('definePageLanguageLinks')
-    helper.addServerUtil('useCurrentLanguage')
+    helper.addServerUtil('getCurrentLanguage')
+    helper.addComponent('LanguageOverride')
     helper.addAlias('#nuxt-language-negotiation', helper.paths.moduleBuildDir)
 
     const negotiators = passedOptions.negotiators

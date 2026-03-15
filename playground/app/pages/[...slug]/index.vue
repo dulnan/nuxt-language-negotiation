@@ -7,6 +7,12 @@
 
 <script lang="ts" setup>
 import { defaultLanguageNoPrefix } from '#nuxt-language-negotiation/config'
+import {
+  useRoute,
+  useAsyncData,
+  createError,
+  definePageLanguageLinks,
+} from '#imports'
 
 const route = useRoute()
 

@@ -3,6 +3,8 @@
 </template>
 
 <script lang="ts" setup>
+import { definePageMeta } from '#imports'
+
 definePageMeta({
   name: 'page-with-aliases',
   path: '/path-german',

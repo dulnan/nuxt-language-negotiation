@@ -3,5 +3,7 @@
 </template>
 
 <script setup lang="ts">
-  const language = useCurrentLanguage()
+import { useCurrentLanguage } from '#imports'
+
+const language = useCurrentLanguage()
 </script>

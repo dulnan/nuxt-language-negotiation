@@ -1,4 +1,5 @@
 import {
+  addComponent,
   addImports,
   addPlugin,
   addServerHandler,
@@ -142,7 +143,6 @@ export class ModuleHelper {
   public readonly paths: ModuleHelperPaths
 
   public readonly isDev: boolean
-  public readonly isPlaygroundDev: boolean
   public readonly debug: boolean
 
   private serverNegotiators: ServerNegotiator[] = []
@@ -163,8 +163,6 @@ export class ModuleHelper {
   ) {
     const isModuleBuild =
       process.env.PLAYGROUND_MODULE_BUILD === 'true' && nuxt.options._prepare
-
-    this.isPlaygroundDev = process.env.PLAYGROUND_DEV === 'true'
 
     const mergedOptions = defu(options)
 
@@ -288,6 +286,16 @@ export class ModuleHelper {
 
   public transpile(path: string) {
     this.nuxt.options.build.transpile.push(path)
+  }
+
+  public addComponent(name: string) {
+    addComponent({
+      filePath: this.resolvers.module.resolve(
+        './runtime/app/components/' + name,
+      ),
+      name,
+      global: true,
+    })
   }
 
   public applyBuildConfig() {

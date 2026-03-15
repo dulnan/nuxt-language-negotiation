@@ -15,6 +15,5 @@ export default defineBuildConfig({
   ],
   replace: {
     'process.env.PLAYGROUND_MODULE_BUILD': 'undefined',
-    'process.env.PLAYGROUND_DEV': 'undefined',
   },
 })

@@ -5,6 +5,8 @@
 </template>
 
 <script lang="ts" setup>
+import { definePageMeta, useRoute, computed } from '#imports'
+
 definePageMeta({
   name: 'products-images',
   path: 'bilder/:id',

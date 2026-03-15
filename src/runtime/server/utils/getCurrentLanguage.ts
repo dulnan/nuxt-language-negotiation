@@ -24,7 +24,7 @@ function negotiate(event: H3Event): Langcode {
   return defaultLangcode
 }
 
-export function useCurrentLanguage(event: H3Event): Langcode {
+export function getCurrentLanguage(event: H3Event): Langcode {
   if (event.context.negotiatedLanguage) {
     return event.context.negotiatedLanguage
   }
