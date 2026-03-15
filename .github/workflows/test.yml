@@ -37,10 +37,17 @@ jobs:
         run: |
           npm run typecheck
 
+      - name: Vitest
+        run: |
+          npm run test
+
       - name: Module Builder
         run: |
           npm run prepack
 
-      - name: Vitest
+      - name: Test module install
         run: |
-          npm run test
+          cd playground-module-install
+          npm ci
+          npm run build
+          npm run typecheck
