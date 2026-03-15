@@ -17,7 +17,6 @@ import { defu } from 'defu'
 import { fileExists, logger } from './../helpers'
 import type { ModuleTemplate } from './../templates/defineTemplate'
 import ISO6391 from 'iso-639-1'
-import type { NitroConfig } from 'nitropack/types'
 
 /**
  * Validate and build the language options.
