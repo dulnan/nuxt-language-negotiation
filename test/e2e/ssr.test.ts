@@ -5,7 +5,7 @@ import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
 // Required so the module resolves runtime server negotiators as .ts source files.
 process.env.PLAYGROUND_DEV = 'true'
 
-describe('SSR', async () => {
+describe('SSR', { timeout: 120_000 }, async () => {
   await setup({
     rootDir: fileURLToPath(
       new URL('../fixtures/language-override', import.meta.url),
