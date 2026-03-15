@@ -36,6 +36,6 @@ const { data: page } = await useAsyncData(route.path, () => {
 })
 
 if (page.value) {
-  definePageLanguageLinks(page.value.languageLinks)
+  definePageLanguageLinks(page.value.languageLinks as Record<string, string>)
 }
 </script>

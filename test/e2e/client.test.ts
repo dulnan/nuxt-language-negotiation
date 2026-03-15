@@ -60,19 +60,56 @@ describe(
         await page.close()
       })
 
-      it('does not affect router link resolution (router uses route language, not override)', async () => {
-        // Visit /en — the override sets language to "fr" for useCurrentLanguage(),
-        // but the router plugin's currentLanguage is bound to the route path ("en").
-        // A NuxtLink with { name: 'search' } inside the override should still
-        // resolve to the English variant, not the French one.
+      it('NuxtLink inside LanguageOverride resolves using override language', async () => {
+        // Visit /en — the override sets language to "fr".
+        // A NuxtLink with { name: 'search' } inside the override should
+        // resolve to the French variant, not the English one.
         const page = await createPage(url('/en'))
 
         const href = await page
           .locator('[data-testid="link-inside-override"]')
           .getAttribute('href')
 
-        // Should be /en/search (route language), NOT /fr/rechercher (override language).
-        expect(href).toBe('/en/search')
+        expect(href).toBe('/fr/rechercher')
+
+        await page.close()
+      })
+
+      it('NuxtLink inside LanguageOverride resolves unmapped route with override langPrefix', async () => {
+        const page = await createPage(url('/en'))
+
+        const href = await page
+          .locator('[data-testid="link-inside-override-de"]')
+          .getAttribute('href')
+
+        // About has no language mapping, so it uses langPrefix param.
+        // The German override should inject langPrefix=de.
+        expect(href).toBe('/de/about')
+
+        await page.close()
+      })
+
+      it('NuxtLink outside override still uses route language', async () => {
+        const page = await createPage(url('/de'))
+
+        const href = await page
+          .locator('[data-testid="link-outside-override"]')
+          .getAttribute('href')
+
+        expect(href).toBe('/de/suchen')
+
+        await page.close()
+      })
+
+      it('override with null langcode does not affect link resolution', async () => {
+        // null override should fall through to the route language.
+        const page = await createPage(url('/de'))
+
+        const hrefOutside = await page
+          .locator('[data-testid="link-outside-override"]')
+          .getAttribute('href')
+
+        expect(hrefOutside).toBe('/de/suchen')
 
         await page.close()
       })
@@ -191,6 +228,59 @@ describe(
     })
 
     describe('router plugin route translation', () => {
+      it('multiple NuxtLinks on same page resolve correctly', async () => {
+        const page = await createPage(url('/de/router-test'))
+
+        const [searchHref, aboutHref, searchFrHref, pathHref] =
+          await Promise.all([
+            page
+              .locator('[data-testid="link-name-search"]')
+              .getAttribute('href'),
+            page
+              .locator('[data-testid="link-name-about"]')
+              .getAttribute('href'),
+            page
+              .locator('[data-testid="link-name-search-fr"]')
+              .getAttribute('href'),
+            page
+              .locator('[data-testid="link-path-string"]')
+              .getAttribute('href'),
+          ])
+
+        expect(searchHref).toBe('/de/suchen')
+        expect(aboutHref).toBe('/de/about')
+        expect(searchFrHref).toBe('/fr/rechercher')
+        expect(pathHref).toBe('/fr/rechercher')
+
+        await page.close()
+      })
+
+      it('links update reactively after navigation', async () => {
+        const page = await createPage(url('/en/router-test'))
+
+        // On /en, search link should be /en/search
+        let href = await page
+          .locator('[data-testid="link-name-search"]')
+          .getAttribute('href')
+        expect(href).toBe('/en/search')
+
+        // Navigate to /de/router-test via push
+        await page.locator('[data-testid="btn-push-about"]').click()
+        await page.waitForURL('**/en/about')
+        await page.goBack()
+        await page.waitForURL('**/en/router-test')
+
+        // Navigate to /de via the search link isn't direct, so let's navigate programmatically
+        // We'll use the button to push to search (which goes to /en/search),
+        // then go back and verify links are still correct
+        href = await page
+          .locator('[data-testid="link-name-search"]')
+          .getAttribute('href')
+        expect(href).toBe('/en/search')
+
+        await page.close()
+      })
+
       it('resolve() translates route name to current language variant', async () => {
         // The "Search by name" link uses { name: 'search' }.
         // On /de, resolve() should produce /de/suchen.

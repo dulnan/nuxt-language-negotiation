@@ -80,6 +80,32 @@ describe('SSR', async () => {
     })
   })
 
+  describe('NuxtLink SSR rendering', () => {
+    it('renders correct href for NuxtLink with route names', async () => {
+      const html = await $fetch<string>('/de/router-test')
+      const href = extractAttribute(html, 'link-name-search', 'href')
+      expect(href).toBe('/de/suchen')
+    })
+
+    it('renders correct href inside LanguageOverride', async () => {
+      const html = await $fetch<string>('/en')
+      const href = extractAttribute(html, 'link-inside-override', 'href')
+      expect(href).toBe('/fr/rechercher')
+    })
+
+    it('renders correct href for unmapped route inside LanguageOverride', async () => {
+      const html = await $fetch<string>('/en')
+      const href = extractAttribute(html, 'link-inside-override-de', 'href')
+      expect(href).toBe('/de/about')
+    })
+
+    it('renders correct href for NuxtLink outside override', async () => {
+      const html = await $fetch<string>('/de')
+      const href = extractAttribute(html, 'link-outside-override', 'href')
+      expect(href).toBe('/de/suchen')
+    })
+  })
+
   describe('getCurrentLanguage server util', () => {
     it('returns the default language for API requests without negotiation context', async () => {
       const data = await $fetch<{ language: string }>('/api/language')
@@ -183,8 +209,21 @@ function extractAttribute(
   testId: string,
   attr: string,
 ): string | null {
-  const regex = new RegExp(
-    `data-testid="${testId}"[^>]*${attr}="([^"]*)"`,
+  // Match the attribute regardless of order: find the tag containing
+  // data-testid="<testId>" and extract the named attribute from it.
+  const tagRegex = new RegExp(
+    `<[^>]*data-testid="${testId}"[^>]*>`,
   )
-  return regex.exec(html)?.[1] ?? null
+  const tagMatch = tagRegex.exec(html)
+  if (!tagMatch) {
+    // Try reverse order (attr before data-testid)
+    const reverseRegex = new RegExp(
+      `<[^>]*${attr}="([^"]*)"[^>]*data-testid="${testId}"[^>]*>`,
+    )
+    const reverseMatch = reverseRegex.exec(html)
+    return reverseMatch?.[1] ?? null
+  }
+  const attrRegex = new RegExp(`${attr}="([^"]*)"`)
+  const attrMatch = attrRegex.exec(tagMatch[0])
+  return attrMatch?.[1] ?? null
 }

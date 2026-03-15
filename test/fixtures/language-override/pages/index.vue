@@ -23,6 +23,9 @@
       <div data-testid="override-de">
         <ShowLanguage />
         <ShowLanguageFull />
+        <NuxtLink :to="{ name: 'about' }" data-testid="link-inside-override-de">
+          About inside override
+        </NuxtLink>
       </div>
     </LanguageOverride>
 
@@ -40,6 +43,7 @@
       </div>
     </LanguageOverride>
 
+    <NuxtLink :to="{ name: 'search' }" data-testid="link-outside-override">Search outside override</NuxtLink>
     <NuxtLink to="/en/search" data-testid="link-search">Go to Search</NuxtLink>
     <NuxtLink to="/en/about" data-testid="link-about">Go to About</NuxtLink>
     <NuxtLink to="/en/language-links" data-testid="link-language-links">Language Links</NuxtLink>

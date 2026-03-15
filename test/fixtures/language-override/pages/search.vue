@@ -6,7 +6,9 @@
 </template>
 
 <script setup lang="ts">
-import { definePageMeta, useCurrentLanguage } from '#imports'
+import { useCurrentLanguage } from '#imports'
+
+declare const definePageMeta: (meta: Record<string, unknown>) => void
 
 definePageMeta({
   path: '/search',
