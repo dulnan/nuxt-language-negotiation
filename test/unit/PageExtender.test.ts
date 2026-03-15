@@ -3,8 +3,6 @@ import {
   PageExtender,
   type BuiltPage,
 } from './../../src/negotiators/pathPrefix/PageExtender'
-import type { ModuleOptionsLanguages } from '../../src/build/types'
-
 type PartialNuxtPage = {
   path: string
   name: string
@@ -12,10 +10,6 @@ type PartialNuxtPage = {
     languageMapping?: Record<string, string>
   }
   children?: PartialNuxtPage[]
-}
-
-type MockHelper = {
-  languages: ModuleOptionsLanguages
 }
 
 describe('PageExtender', () => {
@@ -63,14 +57,25 @@ describe('PageExtender', () => {
   }
 
   describe('extend()', () => {
-    it('throws an error if a page is missing a name', () => {
-      expect(() =>
-        testExtend([
-          {
-            path: '/some-path-without-name',
-          } as any,
-        ]),
-      ).toThrowError(/Missing name in page/)
+    it('skips a page that is missing a name and sets hasAnyErrors', () => {
+      const mockHelper: any = {
+        languages: [
+          { code: 'en', prefix: 'en', label: 'English' },
+          { code: 'de', prefix: 'de', label: 'Deutsch' },
+          { code: 'fr', prefix: 'fr', label: 'Français' },
+        ],
+        defaultLanguage: { code: 'en', prefix: 'en', label: 'English' },
+        defaultLanguageNoPrefix: false,
+        debug: false,
+      }
+      const extender = new PageExtender(mockHelper)
+      extender.extend([
+        {
+          path: '/some-path-without-name',
+        } as any,
+      ])
+      expect(extender.hasError()).toBe(true)
+      expect(extender.getBuiltPages()).toHaveLength(0)
     })
 
     it('handles a simple route without languageMapping (top-level)', () => {
