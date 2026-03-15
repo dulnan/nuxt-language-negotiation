@@ -46,6 +46,9 @@ export default defineNuxtConfig({
       exclude: ['../server'],
     },
   },
+  imports: {
+    autoImport: false,
+  },
 
   experimental: {
     scanPageMeta: true,

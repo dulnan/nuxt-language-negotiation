@@ -7,6 +7,9 @@ export default defineNuxtConfig({
   },
   typescript: {
     strict: true,
+    tsConfig: {
+      exclude: ['../playground'],
+    },
   },
   languageNegotiation: {
     negotiators: [

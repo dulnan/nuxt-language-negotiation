@@ -1,4 +1,5 @@
 import {
+  addComponent,
   addImports,
   addPlugin,
   addServerHandler,
@@ -16,6 +17,8 @@ import { defu } from 'defu'
 import { fileExists, logger } from './../helpers'
 import type { ModuleTemplate } from './../templates/defineTemplate'
 import ISO6391 from 'iso-639-1'
+import type {NitroConfig} from 'nitropack/types'
+import type { NuxtConfig } from 'nuxt/schema'
 
 /**
  * Validate and build the language options.
@@ -290,26 +293,36 @@ export class ModuleHelper {
     this.nuxt.options.build.transpile.push(path)
   }
 
+  public addComponent(name: string) {
+    addComponent({
+      filePath: this.resolvers.module.resolve('./runtime/app/components/' + name),
+      name,
+      global: true,
+    })
+  }
+
   public applyBuildConfig() {
+    const nitroConfig = (this.nuxt.options as any).nitro as NitroConfig
+
     // Workaround for https://github.com/nuxt/nuxt/issues/28995
-    this.nuxt.options.nitro.externals ||= {}
-    this.nuxt.options.nitro.externals.inline ||= []
-    this.nuxt.options.nitro.externals.inline.push(...this.nitroExternals)
+    nitroConfig.externals ||= {}
+    nitroConfig.externals.inline ||= []
+    nitroConfig.externals.inline.push(...this.nitroExternals)
 
     // Currently needed due to a bug in Nuxt that does not add aliases for
     // nitro. As this has happened before in the past, let's leave it so that
     // we are guaranteed to have these aliases also for server types.
-    this.nuxt.options.nitro.typescript ||= {}
-    this.nuxt.options.nitro.typescript.tsConfig ||= {}
-    this.nuxt.options.nitro.typescript.tsConfig.compilerOptions ||= {}
-    this.nuxt.options.nitro.typescript.tsConfig.compilerOptions.paths ||= {}
+    nitroConfig.typescript ||= {}
+    nitroConfig.typescript.tsConfig ||= {}
+    nitroConfig.typescript.tsConfig.compilerOptions ||= {}
+    nitroConfig.typescript.tsConfig.compilerOptions.paths ||= {}
 
     this.nuxt.options.typescript.tsConfig ||= {}
     this.nuxt.options.typescript.tsConfig.compilerOptions ||= {}
     this.nuxt.options.typescript.tsConfig.compilerOptions.paths ||= {}
 
     for (const [name, path] of Object.entries(this.tsPaths)) {
-      this.nuxt.options.nitro.typescript.tsConfig.compilerOptions.paths[name] =
+      nitroConfig.typescript.tsConfig.compilerOptions.paths[name] =
         [path]
       this.nuxt.options.typescript.tsConfig.compilerOptions.paths[name] = [path]
     }

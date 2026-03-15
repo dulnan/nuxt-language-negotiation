@@ -22,6 +22,8 @@
 </template>
 
 <script lang="ts" setup>
+import { definePageMeta } from '#imports'
+
 definePageMeta({
   name: 'products',
   path: '/produkte',
