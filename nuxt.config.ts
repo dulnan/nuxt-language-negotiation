@@ -8,7 +8,18 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     tsConfig: {
-      exclude: ['../playground'],
+      exclude: [
+        '../playground',
+        '../playground-module-install',
+        '../src/runtime/server',
+      ],
+    },
+  },
+  nitro: {
+    typescript: {
+      tsConfig: {
+        include: ['../src/runtime/server'],
+      },
     },
   },
   languageNegotiation: {

@@ -12,7 +12,7 @@ import {
   type Language,
   languages,
 } from '#nuxt-language-negotiation/config'
-import { useCurrentLanguage as nitroUseCurrentLanguage } from './../../server/utils/useCurrentLanguage'
+import { getCurrentLanguage as nitroGetCurrentLanguage } from './../../server/utils/getCurrentLanguage'
 import { INJECT_OVERRIDE_LANGUAGE } from '../helpers/injection'
 
 /**
@@ -50,7 +50,7 @@ export function useCurrentLanguage(options?: {
     }
 
     const negotiatedLanguage =
-      overrideLanguage?.value ?? nitroUseCurrentLanguage(event)
+      overrideLanguage?.value ?? nitroGetCurrentLanguage(event)
 
     if (options?.full) {
       return computed<Language>(() => {

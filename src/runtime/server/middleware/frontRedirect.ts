@@ -1,4 +1,4 @@
-import { useCurrentLanguage } from '#imports'
+import { getCurrentLanguage } from '#imports'
 import { langcodeToPrefix } from '#nuxt-language-negotiation/config'
 import { defineEventHandler, sendRedirect } from 'h3'
 
@@ -10,9 +10,8 @@ export default defineEventHandler(async (event) => {
   if (path !== '/') {
     return
   }
-
   // Negotiate the appropriate language.
-  const langcode = useCurrentLanguage(event)
+  const langcode = getCurrentLanguage(event)
   const prefix = langcodeToPrefix[langcode]
   const target = '/' + prefix + (query ? '?' + query : '')
   await sendRedirect(event, target)

@@ -40,7 +40,7 @@ The module has a clear separation between code that runs during Nuxt build/dev s
 
 - **`src/build/`** — Build-time only. `ModuleHelper` is the central orchestrator that registers plugins, composables, components, templates, aliases, and server handlers with Nuxt. Templates in `src/build/templates/` generate runtime configuration files written to `.nuxt/nuxt-language-negotiation/`.
 - **`src/runtime/app/`** — Client/universal runtime: composables (`useCurrentLanguage`, `useLanguageLinks`, `definePageLanguageLinks`), plugins (`router.ts`, `frontRedirect.ts`), and the `LanguageOverride` component.
-- **`src/runtime/server/`** — Server runtime: `useCurrentLanguage(event)` server util, middleware.
+- **`src/runtime/server/`** — Server runtime: `getCurrentLanguage(event)` server util, middleware.
 - **`src/runtime/helpers/`** — Shared helpers used by both app and server runtime.
 
 ### Negotiator System
