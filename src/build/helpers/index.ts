@@ -1,8 +1,7 @@
 import { existsSync } from 'node:fs'
-import { useLogger } from '@nuxt/kit'
-import type { ConsolaInstance } from 'consola'
+import { useLogger, type NuxtLogger } from '@nuxt/kit'
 
-export const logger: ConsolaInstance = useLogger('nuxt-language-negotiation')
+export const logger: NuxtLogger = useLogger('nuxt-language-negotiation')
 
 export const LANGUAGE_CONTEXT_KEY = '__language_context'
 
