@@ -1,6 +1,6 @@
-import { useCurrentLanguage } from '#imports'
 import { langcodeToPrefix } from '#nuxt-language-negotiation/config'
 import { defineEventHandler, sendRedirect } from 'h3'
+import { useCurrentLanguage } from '../utils/useCurrentLanguage'
 
 /**
  * Redirects to the correct language prefix for the front route.
