@@ -351,12 +351,13 @@ export class ModuleHelper {
     )
   }
 
-  public addServerMiddleware(name: string) {
+  public addServerMiddleware(name: string, route: string) {
     addServerHandler({
       handler: this.resolvers.module.resolve(
         './runtime/server/middleware/' + name,
       ),
       middleware: true,
+      route,
     })
   }
 
