@@ -4,3 +4,5 @@ import pathPrefix from './negotiators/pathPrefix'
 import acceptLanguage from './negotiators/acceptLanguage'
 
 export { query, cookie, pathPrefix, acceptLanguage }
+
+export type { LanguageNegotiatorDefinition } from './build/types'

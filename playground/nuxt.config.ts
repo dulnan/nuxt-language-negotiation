@@ -1,4 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import tailwindcss from '@tailwindcss/vite'
 import { pathPrefix, cookie, acceptLanguage, query } from './../src/negotiators'
 import type { ModuleOptions } from '../src/build/types'
 import NuxtLanguageNegotiation from './../src/module'
@@ -27,18 +28,14 @@ const languageNegotiation: ModuleOptions = {
 }
 
 export default defineNuxtConfig({
+  // Nitro v2 by default; PLAYGROUND_NITRO=3 (npm run dev:nitro3) for Nitro v3.
+  _nitroMajor: process.env.PLAYGROUND_NITRO === '3' ? 3 : 2,
+
   modules: [NuxtLanguageNegotiation, '@nuxt/eslint'],
 
   languageNegotiation,
 
   css: ['~/assets/css/main.css'],
-
-  postcss: {
-    plugins: {
-      tailwindcss: {},
-      autoprefixer: {},
-    },
-  },
 
   typescript: {
     strict: true,
@@ -59,6 +56,7 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    plugins: [tailwindcss()],
     build: {
       minify: false,
     },

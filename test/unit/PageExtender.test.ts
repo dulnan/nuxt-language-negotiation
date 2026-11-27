@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { logger } from '../../src/build/helpers'
 import {
   PageExtender,
   type BuiltPage,
 } from './../../src/negotiators/pathPrefix/PageExtender'
-import type { ModuleOptionsLanguages } from '../../src/build/types'
 
 type PartialNuxtPage = {
   path: string
@@ -12,10 +12,6 @@ type PartialNuxtPage = {
     languageMapping?: Record<string, string>
   }
   children?: PartialNuxtPage[]
-}
-
-type MockHelper = {
-  languages: ModuleOptionsLanguages
 }
 
 describe('PageExtender', () => {
@@ -41,10 +37,7 @@ describe('PageExtender', () => {
     return '\n' + lines.join('\n')
   }
 
-  function testExtend(
-    pages: PartialNuxtPage[],
-    overrides: object = {},
-  ): string {
+  function createExtender(overrides: object = {}): PageExtender {
     const mockHelper: any = {
       languages: [
         { code: 'en', prefix: 'en', label: 'English' },
@@ -56,21 +49,37 @@ describe('PageExtender', () => {
       debug: false,
       ...overrides,
     }
-    const extender = new PageExtender(mockHelper)
+    return new PageExtender(mockHelper)
+  }
+
+  function testExtend(
+    pages: PartialNuxtPage[],
+    overrides: object = {},
+  ): string {
+    const extender = createExtender(overrides)
     extender.extend(pages)
     const builtPages = extender.getBuiltPages()
     return formatBuiltPages(builtPages)
   }
 
   describe('extend()', () => {
-    it('throws an error if a page is missing a name', () => {
-      expect(() =>
-        testExtend([
-          {
-            path: '/some-path-without-name',
-          } as any,
-        ]),
-      ).toThrowError(/Missing name in page/)
+    it('skips a page without a name and reports an error', () => {
+      // The error does not throw, so that the dev server keeps running. The
+      // pathPrefix negotiator throws for production builds when hasError().
+      const logError = vi.spyOn(logger, 'error').mockImplementation(() => {})
+      const extender = createExtender()
+      const pages = extender.extend([
+        { path: '/some-path-without-name' } as any,
+        { name: 'about', path: '/about' },
+      ])
+      expect(extender.hasError()).toBe(true)
+      expect(pages.map((v) => v.name)).toEqual(['about'])
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /Missing name in page "\/some-path-without-name"/,
+        ),
+      )
+      logError.mockRestore()
     })
 
     it('handles a simple route without languageMapping (top-level)', () => {
@@ -231,6 +240,131 @@ describe('PageExtender', () => {
       `)
     })
 
-    it('handles scenario where defaultLanguageNoPrefix = true', () => {})
+    describe('default language without a prefix', () => {
+      const noPrefix = {
+        languages: [
+          { code: 'en', prefix: '', label: 'English' },
+          { code: 'de', prefix: 'de', label: 'Deutsch' },
+          { code: 'fr', prefix: 'fr', label: 'Français' },
+        ],
+        defaultLanguage: { code: 'en', prefix: '', label: 'English' },
+        defaultLanguageNoPrefix: true,
+      }
+
+      it('makes the language param optional without the default language', () => {
+        expect(testExtend([{ name: 'about', path: '/about' }], noPrefix))
+          .toMatchInlineSnapshot(`
+            "
+            about | about | en,de,fr | /:langPrefix(de|fr)?/about"
+          `)
+      })
+
+      it('gives the default language route no prefix', () => {
+        expect(
+          testExtend(
+            [
+              {
+                name: 'search',
+                path: '/search',
+                meta: { languageMapping: { de: '/suchen', fr: '/rechercher' } },
+              },
+            ],
+            noPrefix,
+          ),
+        ).toMatchInlineSnapshot(`
+          "
+          search | search___fr | fr | /fr/rechercher
+          search | search___en | en | /search
+          search | search___de | de | /de/suchen"
+        `)
+      })
+
+      it('links the default language without a prefix', () => {
+        const extender = createExtender(noPrefix)
+        extender.extend([
+          { name: 'about', path: '/about' },
+          {
+            name: 'search',
+            path: '/search',
+            meta: { languageMapping: { de: '/suchen' } },
+          },
+        ])
+        expect(extender.getLanguageLinks()).toEqual({
+          about: { en: '/about', de: '/de/about', fr: '/fr/about' },
+          search: { en: '/search', de: '/de/suchen' },
+        })
+      })
+    })
+
+    it('skips a page whose path starts with a language prefix', () => {
+      const logError = vi.spyOn(logger, 'error').mockImplementation(() => {})
+      const extender = createExtender()
+      const pages = extender.extend([
+        { name: 'german', path: '/de/something' },
+        { name: 'about', path: '/about' },
+      ])
+      expect(extender.hasError()).toBe(true)
+      expect(pages.map((v) => v.name)).toEqual(['about'])
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringContaining('"/de/something" is not valid'),
+      )
+      logError.mockRestore()
+    })
+
+    it('keeps only the default language for an empty languageMapping', () => {
+      expect(
+        testExtend([
+          {
+            name: 'only-english',
+            path: '/only',
+            meta: { languageMapping: {} },
+          },
+        ]),
+      ).toMatchInlineSnapshot(`
+        "
+        only-english | only-english | en | /en/only"
+      `)
+    })
+
+    it('links every language for a page without a mapping', () => {
+      const extender = createExtender()
+      extender.extend([{ name: 'about', path: '/about' }])
+      expect(extender.getLanguageLinks()).toEqual({
+        about: { en: '/en/about', de: '/de/about', fr: '/fr/about' },
+      })
+    })
+
+    it('links the mapped paths of a page with a mapping', () => {
+      const extender = createExtender()
+      extender.extend([
+        {
+          name: 'search',
+          path: '/search',
+          meta: { languageMapping: { de: '/suchen' } },
+        },
+      ])
+      expect(extender.getLanguageLinks()).toEqual({
+        search: { en: '/en/search', de: '/de/suchen' },
+      })
+    })
+
+    // Known issue: the language links of a child page without a mapping, in a
+    // parent without a mapping, leave out the parent path
+    // (PageExtender.ts getFullPagePath(page.path, '')).
+    it.fails('links the full path of a nested page without a mapping', () => {
+      const extender = createExtender()
+      extender.extend([
+        {
+          name: 'parent',
+          path: '/parent',
+          children: [{ name: 'child', path: 'child' }],
+        },
+      ])
+      expect(extender.getLanguageLinks().child).toEqual({
+        en: '/en/parent/child',
+        de: '/de/parent/child',
+        fr: '/fr/parent/child',
+      })
+    })
   })
 })

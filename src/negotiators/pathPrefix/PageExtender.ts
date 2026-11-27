@@ -97,8 +97,7 @@ export class PageExtender {
 
       // Route without any language mapping.
       const mapping = page.meta?.languageMapping as
-        | Record<string, string>
-        | undefined
+        Record<string, string> | undefined
 
       if (!mapping) {
         if (onlyLanguage) {
