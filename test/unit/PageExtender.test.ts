@@ -240,6 +240,131 @@ describe('PageExtender', () => {
       `)
     })
 
-    it('handles scenario where defaultLanguageNoPrefix = true', () => {})
+    describe('default language without a prefix', () => {
+      const noPrefix = {
+        languages: [
+          { code: 'en', prefix: '', label: 'English' },
+          { code: 'de', prefix: 'de', label: 'Deutsch' },
+          { code: 'fr', prefix: 'fr', label: 'Français' },
+        ],
+        defaultLanguage: { code: 'en', prefix: '', label: 'English' },
+        defaultLanguageNoPrefix: true,
+      }
+
+      it('makes the language param optional without the default language', () => {
+        expect(testExtend([{ name: 'about', path: '/about' }], noPrefix))
+          .toMatchInlineSnapshot(`
+            "
+            about | about | en,de,fr | /:langPrefix(de|fr)?/about"
+          `)
+      })
+
+      it('gives the default language route no prefix', () => {
+        expect(
+          testExtend(
+            [
+              {
+                name: 'search',
+                path: '/search',
+                meta: { languageMapping: { de: '/suchen', fr: '/rechercher' } },
+              },
+            ],
+            noPrefix,
+          ),
+        ).toMatchInlineSnapshot(`
+          "
+          search | search___fr | fr | /fr/rechercher
+          search | search___en | en | /search
+          search | search___de | de | /de/suchen"
+        `)
+      })
+
+      it('links the default language without a prefix', () => {
+        const extender = createExtender(noPrefix)
+        extender.extend([
+          { name: 'about', path: '/about' },
+          {
+            name: 'search',
+            path: '/search',
+            meta: { languageMapping: { de: '/suchen' } },
+          },
+        ])
+        expect(extender.getLanguageLinks()).toEqual({
+          about: { en: '/about', de: '/de/about', fr: '/fr/about' },
+          search: { en: '/search', de: '/de/suchen' },
+        })
+      })
+    })
+
+    it('skips a page whose path starts with a language prefix', () => {
+      const logError = vi.spyOn(logger, 'error').mockImplementation(() => {})
+      const extender = createExtender()
+      const pages = extender.extend([
+        { name: 'german', path: '/de/something' },
+        { name: 'about', path: '/about' },
+      ])
+      expect(extender.hasError()).toBe(true)
+      expect(pages.map((v) => v.name)).toEqual(['about'])
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringContaining('"/de/something" is not valid'),
+      )
+      logError.mockRestore()
+    })
+
+    it('keeps only the default language for an empty languageMapping', () => {
+      expect(
+        testExtend([
+          {
+            name: 'only-english',
+            path: '/only',
+            meta: { languageMapping: {} },
+          },
+        ]),
+      ).toMatchInlineSnapshot(`
+        "
+        only-english | only-english | en | /en/only"
+      `)
+    })
+
+    it('links every language for a page without a mapping', () => {
+      const extender = createExtender()
+      extender.extend([{ name: 'about', path: '/about' }])
+      expect(extender.getLanguageLinks()).toEqual({
+        about: { en: '/en/about', de: '/de/about', fr: '/fr/about' },
+      })
+    })
+
+    it('links the mapped paths of a page with a mapping', () => {
+      const extender = createExtender()
+      extender.extend([
+        {
+          name: 'search',
+          path: '/search',
+          meta: { languageMapping: { de: '/suchen' } },
+        },
+      ])
+      expect(extender.getLanguageLinks()).toEqual({
+        search: { en: '/en/search', de: '/de/suchen' },
+      })
+    })
+
+    // Known issue: the language links of a child page without a mapping, in a
+    // parent without a mapping, leave out the parent path
+    // (PageExtender.ts getFullPagePath(page.path, '')).
+    it.fails('links the full path of a nested page without a mapping', () => {
+      const extender = createExtender()
+      extender.extend([
+        {
+          name: 'parent',
+          path: '/parent',
+          children: [{ name: 'child', path: 'child' }],
+        },
+      ])
+      expect(extender.getLanguageLinks().child).toEqual({
+        en: '/en/parent/child',
+        de: '/de/parent/child',
+        fr: '/fr/parent/child',
+      })
+    })
   })
 })

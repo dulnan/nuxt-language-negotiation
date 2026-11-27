@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { NuxtConfig } from 'nuxt/schema'
 import type { ConsoleMessage, Page } from 'playwright-core'
+import { it } from 'vitest'
 import {
   createPage,
   fetch,
@@ -12,6 +13,14 @@ import {
 } from '@nuxt/test-utils/e2e'
 
 export type NitroMajor = 2 | 3
+
+/**
+ * A test for the correct behavior, which fails because of a known issue. It
+ * passes while the issue exists, and fails once it is fixed: then change it to
+ * it(). With KNOWN_ISSUES=strict, these run as normal tests, to see why they
+ * fail.
+ */
+export const knownIssue = process.env.KNOWN_ISSUES === 'strict' ? it : it.fails
 
 /**
  * What the TestState component renders.
@@ -27,6 +36,7 @@ export type State = {
     enabled: boolean
     active: boolean
     href: string | null
+    resolveError: string | null
   }[]
   hydrated: boolean
 }
