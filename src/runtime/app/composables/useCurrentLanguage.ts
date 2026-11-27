@@ -1,6 +1,12 @@
-import { getLanguageFromPath } from './../../helpers'
+import { getLanguageFromPath, LANGUAGE_STATE_KEY } from './../../helpers'
 import { toValidLanguage } from './../../helpers/toValidLanguage'
-import { useRoute, computed, type ComputedRef, useRequestEvent } from '#imports'
+import {
+  useRoute,
+  computed,
+  type ComputedRef,
+  useRequestEvent,
+  useState,
+} from '#imports'
 import {
   type Langcode,
   type Language,
@@ -25,41 +31,37 @@ export function useCurrentLanguage(): ComputedRef<Langcode>
 
 /**
  * Get the current language code or langage object.
+ *
+ * On the server, this is the negotiated language. The client gets it through
+ * the payload, so that it hydrates in the same language. On client-side
+ * navigation, the router plugin of the pathPrefix negotiator updates it.
  */
 export function useCurrentLanguage(options?: {
   full: true
 }): ComputedRef<Language> | ComputedRef<Langcode> {
-  // On the server, we can use the already negotiated language.
-  if (import.meta.server) {
-    const event = useRequestEvent()
+  const language = useState<Langcode>(LANGUAGE_STATE_KEY, () => {
+    if (import.meta.server) {
+      const event = useRequestEvent()
 
-    // This *really* should not be possible, because this code is only executed
-    // on the server, where by all means a request event should be available.
-    if (!event) {
-      throw new Error('Failed to get request event.')
+      // This *really* should not be possible, because this code is only
+      // executed on the server, where by all means a request event should be
+      // available.
+      if (!event) {
+        throw new Error('Failed to get request event.')
+      }
+
+      return nitroUseCurrentLanguage(event)
     }
 
-    const negotiatedLanguage = nitroUseCurrentLanguage(event)
+    // Not negotiated on the server, e.g. with ssr: false.
+    return toValidLanguage(getLanguageFromPath(useRoute().path))
+  })
 
-    if (options?.full) {
-      return computed<Language>(() => {
-        return languages.find((v) => v.code === negotiatedLanguage)!
-      })
-    }
-
-    return computed<Langcode>(() => negotiatedLanguage)
-  } else {
-    const route = useRoute()
-    if (options?.full) {
-      return computed<Language>(() => {
-        const language = getLanguageFromPath(route.path)
-        const langcode = toValidLanguage(language)
-        return languages.find((v) => v.code === langcode)!
-      })
-    }
-
-    return computed<Langcode>(() => {
-      return toValidLanguage(getLanguageFromPath(route.path))
+  if (options?.full) {
+    return computed<Language>(() => {
+      return languages.find((v) => v.code === language.value)!
     })
   }
+
+  return computed<Langcode>(() => language.value)
 }

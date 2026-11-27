@@ -4,7 +4,6 @@ import {
   getBuiltNitroVersion,
   getJson,
   getState,
-  knownIssue,
   openPage,
   readLinkHref,
   readPageState,
@@ -416,21 +415,63 @@ export function prefixedTests(nitro: NitroMajor) {
       await page.close()
     })
 
-    // Known issue: on the client, useCurrentLanguage() only reads the path.
-    // Without a prefix, the server negotiates fr from Accept-Language, but the
-    // client falls back to the default language: a hydration mismatch.
-    knownIssue(
-      'hydrates a page without a prefix in the negotiated language',
-      async () => {
-        const { page, messages } = await openPage('/unprefixed-page', {
-          acceptLanguage: 'fr',
-        })
-        const state = await readPageState(page)
-        expect(messages).toEqual([])
-        expect(state.language).toBe('fr')
-        await page.close()
-      },
-    )
+    it('hydrates a page without a prefix in the negotiated language', async () => {
+      const { page, messages } = await openPage('/unprefixed-page', {
+        acceptLanguage: 'fr',
+      })
+      const state = await readPageState(page)
+      expect(messages).toEqual([])
+      expect(state.language).toBe('fr')
+      await page.close()
+    })
+
+    it('hydrates a page in the language of the server options', async () => {
+      const { page, messages } = await openPage('/fr', {
+        headers: { 'x-force-language': 'en' },
+      })
+      expect((await readPageState(page)).language).toBe('en')
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('keeps the language when navigating to a page without a prefix', async () => {
+      const { page, messages } = await openPage('/fr', { acceptLanguage: 'de' })
+      await page.getByTestId('to-unprefixed').click()
+      await page.waitForURL('**/unprefixed-page')
+      await expect
+        .poll(async () => (await readPageState(page)).routeName)
+        .toBe('slug')
+      expect((await readPageState(page)).language).toBe('fr')
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('keeps a language switched on the client for a page without a prefix', async () => {
+      const { page } = await openPage('/de/suchen')
+      await page.getByTestId('lang-en').click()
+      await page.waitForURL('**/en/search')
+      await page.getByTestId('to-unprefixed').click()
+      await page.waitForURL('**/unprefixed-page')
+      await expect
+        .poll(async () => (await readPageState(page)).routeName)
+        .toBe('slug')
+      expect((await readPageState(page)).language).toBe('en')
+      await page.close()
+    })
+
+    it('takes the language from the prefix after a page without a prefix', async () => {
+      const { page } = await openPage('/unprefixed-page', {
+        acceptLanguage: 'fr',
+      })
+      await page.evaluate(() =>
+        (window as any).useNuxtApp().$router.push('/en/search'),
+      )
+      await page.waitForURL('**/en/search')
+      await expect
+        .poll(async () => (await readPageState(page)).language)
+        .toBe('en')
+      await page.close()
+    })
 
     it('resolves a nested page without a mapping by name', async () => {
       const { page } = await openPage('/fr/about/team')

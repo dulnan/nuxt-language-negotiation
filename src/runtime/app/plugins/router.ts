@@ -5,16 +5,24 @@ import type {
   RouteLocationAsPath,
   RouteLocationNormalizedLoaded,
 } from 'vue-router'
-import { useRouter, defineNuxtPlugin, useCurrentLanguage } from '#imports'
+import {
+  useRouter,
+  defineNuxtPlugin,
+  useCurrentLanguage,
+  useState,
+} from '#imports'
 import {
   routeNamesWithLanguageParam,
   routeNamesWithoutMapping,
   pageLanguageLinks,
 } from '#nuxt-language-negotiation/routes'
 import {
+  type Langcode,
   defaultLangcode,
+  defaultLanguageNoPrefix,
   langcodeToPrefix,
 } from '#nuxt-language-negotiation/config'
+import { getLanguageFromPath, LANGUAGE_STATE_KEY } from '../../helpers'
 
 /**
  * Replaces methods on the vue-router instance to handle translated routes.
@@ -22,9 +30,28 @@ import {
 export default defineNuxtPlugin({
   name: 'nuxt-language-negotiation:router',
   dependsOn: ['nuxt:router'],
-  setup() {
+  setup(nuxtApp) {
     const router = useRouter()
     const currentLanguage = useCurrentLanguage()
+
+    // Set the current language after client-side navigation. During
+    // hydration, it stays the language the server negotiated.
+    if (import.meta.client) {
+      const language = useState<Langcode>(LANGUAGE_STATE_KEY)
+      router.afterEach((to, _from, failure) => {
+        if (failure || nuxtApp.isHydrating) {
+          return
+        }
+        const fromPath = getLanguageFromPath(to.path) as Langcode | undefined
+        if (fromPath) {
+          language.value = fromPath
+        } else if (defaultLanguageNoPrefix) {
+          language.value = defaultLangcode
+        }
+        // Otherwise, a path without a prefix keeps the language of the
+        // previous page.
+      })
+    }
 
     function translateLocation(v: RouteLocationRaw): RouteLocationRaw {
       if (typeof v === 'object') {

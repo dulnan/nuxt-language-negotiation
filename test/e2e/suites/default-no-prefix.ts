@@ -166,6 +166,16 @@ export function defaultNoPrefixTests(nitro: NitroMajor) {
   })
 
   describe('browser', () => {
+    it('gives a page without a prefix the default language after navigating', async () => {
+      const { page } = await openPage('/en')
+      await page.getByTestId('to-unprefixed').click()
+      await page.waitForURL('**/unprefixed-page')
+      await expect
+        .poll(async () => (await readPageState(page)).language)
+        .toBe('de')
+      await page.close()
+    })
+
     it.each([
       ['/', 'de'],
       ['/suchen', 'de'],
