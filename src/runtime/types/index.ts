@@ -21,10 +21,7 @@ export type ServerOptions<T extends string = string> = {
 }
 
 export type BuiltInNegotiators =
-  | 'pathPrefix'
-  | 'acceptLanguage'
-  | 'queryString'
-  | 'cookie'
+  'pathPrefix' | 'acceptLanguage' | 'queryString' | 'cookie'
 
 export type ServerNegotiator<E = H3Event> = {
   negotiate: (event: E) => string | null | undefined
