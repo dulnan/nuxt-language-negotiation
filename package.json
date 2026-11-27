@@ -54,12 +54,14 @@
     "dev:prepare": "PLAYGROUND_MODULE_BUILD=true nuxt-module-build build --stub && PLAYGROUND_MODULE_BUILD=true nuxt-module-build prepare && nuxi prepare playground",
     "generate": "nuxi generate",
     "typecheck": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
-    "prettier": "prettier ./src --check",
-    "prettier:fix": "prettier ./src --write",
-    "lint": "eslint ./src",
-    "lint:fix": "eslint ./src --fix",
-    "test": "vitest run",
-    "test:watch": "vitest watch"
+    "prettier": "prettier ./src ./test --check",
+    "prettier:fix": "prettier ./src ./test --write",
+    "lint": "eslint ./src ./test",
+    "lint:fix": "eslint ./src ./test --fix",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run --project unit",
+    "test:e2e": "nuxt-module-build build && vitest run --project e2e",
+    "test:watch": "vitest watch --project unit"
   },
   "dependencies": {
     "@nuxt/kit": "^4.7.0",

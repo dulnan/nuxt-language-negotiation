@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { logger } from '../../src/build/helpers'
 import {
   PageExtender,
   type BuiltPage,
 } from './../../src/negotiators/pathPrefix/PageExtender'
-import type { ModuleOptionsLanguages } from '../../src/build/types'
 
 type PartialNuxtPage = {
   path: string
@@ -12,10 +12,6 @@ type PartialNuxtPage = {
     languageMapping?: Record<string, string>
   }
   children?: PartialNuxtPage[]
-}
-
-type MockHelper = {
-  languages: ModuleOptionsLanguages
 }
 
 describe('PageExtender', () => {
@@ -41,10 +37,7 @@ describe('PageExtender', () => {
     return '\n' + lines.join('\n')
   }
 
-  function testExtend(
-    pages: PartialNuxtPage[],
-    overrides: object = {},
-  ): string {
+  function createExtender(overrides: object = {}): PageExtender {
     const mockHelper: any = {
       languages: [
         { code: 'en', prefix: 'en', label: 'English' },
@@ -56,21 +49,37 @@ describe('PageExtender', () => {
       debug: false,
       ...overrides,
     }
-    const extender = new PageExtender(mockHelper)
+    return new PageExtender(mockHelper)
+  }
+
+  function testExtend(
+    pages: PartialNuxtPage[],
+    overrides: object = {},
+  ): string {
+    const extender = createExtender(overrides)
     extender.extend(pages)
     const builtPages = extender.getBuiltPages()
     return formatBuiltPages(builtPages)
   }
 
   describe('extend()', () => {
-    it('throws an error if a page is missing a name', () => {
-      expect(() =>
-        testExtend([
-          {
-            path: '/some-path-without-name',
-          } as any,
-        ]),
-      ).toThrowError(/Missing name in page/)
+    it('skips a page without a name and reports an error', () => {
+      // The error does not throw, so that the dev server keeps running. The
+      // pathPrefix negotiator throws for production builds when hasError().
+      const logError = vi.spyOn(logger, 'error').mockImplementation(() => {})
+      const extender = createExtender()
+      const pages = extender.extend([
+        { path: '/some-path-without-name' } as any,
+        { name: 'about', path: '/about' },
+      ])
+      expect(extender.hasError()).toBe(true)
+      expect(pages.map((v) => v.name)).toEqual(['about'])
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /Missing name in page "\/some-path-without-name"/,
+        ),
+      )
+      logError.mockRestore()
     })
 
     it('handles a simple route without languageMapping (top-level)', () => {

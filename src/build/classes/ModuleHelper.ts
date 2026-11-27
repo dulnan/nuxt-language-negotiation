@@ -21,7 +21,7 @@ import ISO6391 from 'iso-639-1'
 /**
  * Validate and build the language options.
  */
-function buildLanguageOptions(rawLanguages: ModuleOptionsLanguages): {
+export function buildLanguageOptions(rawLanguages: ModuleOptionsLanguages): {
   languages: LanguageBase[]
   defaultLanguage: LanguageBase
   defaultLanguageNoPrefix: boolean
