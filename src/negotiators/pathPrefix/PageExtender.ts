@@ -141,14 +141,13 @@ export class PageExtender {
           `/${this.languageParam}${getFullPagePath(page.path, parentPath)}`,
         )
 
+        const fullPath = getFullPagePath(page.path, parentPath)
         for (const lang of this.helper.languages) {
           const linkPath =
             lang.code === this.helper.defaultLanguage.code &&
             this.helper.defaultLanguageNoPrefix
-              ? cleanPagePath(`/${getFullPagePath(page.path, '')}`)
-              : cleanPagePath(
-                  `/${lang.prefix}${getFullPagePath(page.path, '')}`,
-                )
+              ? cleanPagePath(`/${fullPath}`)
+              : cleanPagePath(`/${lang.prefix}${fullPath}`)
 
           // The route is shared by all languages, so a link by name needs the
           // language param.

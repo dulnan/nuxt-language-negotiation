@@ -5,6 +5,7 @@ import {
   getJson,
   getState,
   openPage,
+  readLinkHref,
   readPageState,
   request,
 } from '../helpers'
@@ -112,6 +113,17 @@ export function defaultNoPrefixTests(nitro: NitroMajor) {
     })
   })
 
+  describe('links by name', () => {
+    it.each([
+      ['/about', '/about/team'],
+      ['/en/about', '/en/about/team'],
+    ])('renders %s with a link to the nested page %s', async (path, href) => {
+      const response = await request(path)
+      expect(response.status).toBe(200)
+      expect(readLinkHref(response.body, 'to-team')).toBe(href)
+    })
+  })
+
   describe('language links', () => {
     it('links the default language without a prefix', async () => {
       const state = await getState('/suchen')
@@ -133,6 +145,15 @@ export function defaultNoPrefixTests(nitro: NitroMajor) {
         ])
       },
     )
+
+    it('links the full path of a nested page without a mapping', async () => {
+      const state = await getState('/en/about/team')
+      expect(state.links.map((v) => [v.code, v.href])).toEqual([
+        ['de', '/about/team'],
+        ['en', '/en/about/team'],
+        ['fr', '/fr/about/team'],
+      ])
+    })
 
     it('links the front page of every language', async () => {
       const state = await getState('/en')

@@ -3,12 +3,22 @@ import { defineLanguageNegotiator } from './../defineLanguageNegotiator'
 import { extendPages } from '@nuxt/kit'
 import type { NuxtPage } from 'nuxt/schema'
 
+/**
+ * All routes, including the children.
+ */
+function flattenRoutes(routes: NuxtPage[]): NuxtPage[] {
+  return routes.flatMap((v) => [v, ...flattenRoutes(v.children || [])])
+}
+
 function buildTemplate(links: LanguageLinksMap, routes: NuxtPage[]): string {
-  const routeNamesWithoutMapping = routes
+  // The router plugin needs these for child routes too.
+  const allRoutes = flattenRoutes(routes)
+
+  const routeNamesWithoutMapping = allRoutes
     .map((v) => (v.name && !v.name.includes('___') ? v.name : null))
     .filter(Boolean)
 
-  const routeNamesWithLanguageParam = routes
+  const routeNamesWithLanguageParam = allRoutes
     .map((v) => (v.path.includes(':langPrefix') && v.name ? v.name : null))
     .filter(Boolean)
 

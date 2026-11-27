@@ -6,6 +6,7 @@ import {
   getState,
   knownIssue,
   openPage,
+  readLinkHref,
   readPageState,
   request,
 } from '../helpers'
@@ -238,6 +239,18 @@ export function prefixedTests(nitro: NitroMajor) {
     })
   })
 
+  describe('links by name', () => {
+    it.each([
+      ['/fr/about', '/fr/about/team'],
+      ['/ch/about', '/ch/about/team'],
+      ['/de/about/team', '/de/about/team'],
+    ])('renders %s with a link to the nested page %s', async (path, href) => {
+      const response = await request(path)
+      expect(response.status).toBe(200)
+      expect(readLinkHref(response.body, 'to-team')).toBe(href)
+    })
+  })
+
   describe('language links', () => {
     it('links the mapped variants and disables missing ones', async () => {
       const state = await getState('/de/suchen')
@@ -313,20 +326,15 @@ export function prefixedTests(nitro: NitroMajor) {
       ])
     })
 
-    // Known issue: the links of a child page without a mapping, in a parent
-    // without a mapping, leave out the parent path.
-    knownIssue(
-      'links the full path of a nested page without a mapping',
-      async () => {
-        const state = await getState('/fr/about/team')
-        expect(state.links.map((v) => [v.code, v.href])).toEqual([
-          ['de', '/de/about/team'],
-          ['en', '/en/about/team'],
-          ['fr', '/fr/about/team'],
-          ['gsw_CH', '/ch/about/team'],
-        ])
-      },
-    )
+    it('links the full path of a nested page without a mapping', async () => {
+      const state = await getState('/fr/about/team')
+      expect(state.links.map((v) => [v.code, v.href])).toEqual([
+        ['de', '/de/about/team'],
+        ['en', '/en/about/team'],
+        ['fr', '/fr/about/team'],
+        ['gsw_CH', '/ch/about/team'],
+      ])
+    })
   })
 
   describe('browser', () => {
@@ -424,10 +432,7 @@ export function prefixedTests(nitro: NitroMajor) {
       },
     )
 
-    // Known issue: the router plugin renames { name } to name___<lang> for a
-    // child page without a mapping in a parent without a mapping, but that
-    // route does not exist.
-    knownIssue('resolves a nested page without a mapping by name', async () => {
+    it('resolves a nested page without a mapping by name', async () => {
       const { page } = await openPage('/fr/about/team')
       const href = await page.evaluate(() => {
         try {

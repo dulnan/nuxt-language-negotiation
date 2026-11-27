@@ -291,6 +291,22 @@ describe('PageExtender', () => {
         })
       })
 
+      it('links the full path of a nested page without a mapping', () => {
+        const extender = createExtender(noPrefix)
+        extender.extend([
+          {
+            name: 'parent',
+            path: '/parent',
+            children: [{ name: 'child', path: 'child' }],
+          },
+        ])
+        expect(extender.getLanguageLinks().child).toEqual({
+          en: '/parent/child',
+          de: '/de/parent/child',
+          fr: '/fr/parent/child',
+        })
+      })
+
       it('links the default language without a prefix', () => {
         const extender = createExtender(noPrefix)
         extender.extend([
@@ -389,10 +405,7 @@ describe('PageExtender', () => {
       })
     })
 
-    // Known issue: the language links of a child page without a mapping, in a
-    // parent without a mapping, leave out the parent path
-    // (PageExtender.ts getFullPagePath(page.path, '')).
-    it.fails('links the full path of a nested page without a mapping', () => {
+    it('links the full path of a nested page without a mapping', () => {
       const extender = createExtender()
       extender.extend([
         {

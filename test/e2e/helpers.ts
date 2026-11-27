@@ -92,6 +92,14 @@ export function readState(html: string): State | null {
   return JSON.parse(json)
 }
 
+/**
+ * Read the href of the link with the given data-testid from the HTML.
+ */
+export function readLinkHref(html: string, testId: string): string | null {
+  const tag = new RegExp(`<a [^>]*data-testid="${testId}"[^>]*>`).exec(html)
+  return tag ? (/ href="([^"]*)"/.exec(tag[0])?.[1] ?? null) : null
+}
+
 export type RequestOptions = {
   acceptLanguage?: string
   cookie?: string
