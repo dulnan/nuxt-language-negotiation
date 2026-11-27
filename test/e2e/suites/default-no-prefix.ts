@@ -122,6 +122,18 @@ export function defaultNoPrefixTests(nitro: NitroMajor) {
       ])
     })
 
+    it.each(['/en/node/5', '/node/5'])(
+      'links every language of a page with a param on %s',
+      async (path) => {
+        const state = await getState(path)
+        expect(state.links.map((v) => [v.code, v.href])).toEqual([
+          ['de', '/node/5'],
+          ['en', '/en/node/5'],
+          ['fr', '/fr/node/5'],
+        ])
+      },
+    )
+
     it('links the front page of every language', async () => {
       const state = await getState('/en')
       expect(state.links.map((v) => [v.code, v.href, v.active])).toEqual([

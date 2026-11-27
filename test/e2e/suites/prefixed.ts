@@ -303,16 +303,13 @@ export function prefixedTests(nitro: NitroMajor) {
       ])
     })
 
-    // Known issue: for a page without a mapping and with a param, every
-    // language link is { name }, and the router plugin fills in the prefix of
-    // the current language.
-    knownIssue('links every language of a page with a param', async () => {
+    it('links every language of a page with a param', async () => {
       const state = await getState('/en/node/5')
-      expect(state.links.map((v) => [v.code, v.href])).toEqual([
-        ['de', '/de/node/5'],
-        ['en', '/en/node/5'],
-        ['fr', '/fr/node/5'],
-        ['gsw_CH', '/ch/node/5'],
+      expect(state.links.map((v) => [v.code, v.href, v.active])).toEqual([
+        ['de', '/de/node/5', false],
+        ['en', '/en/node/5', true],
+        ['fr', '/fr/node/5', false],
+        ['gsw_CH', '/ch/node/5', false],
       ])
     })
 
@@ -386,6 +383,17 @@ export function prefixedTests(nitro: NitroMajor) {
       const { page } = await openPage('/fr/produits/7')
       await page.getByTestId('to-images').click()
       await page.waitForURL('**/fr/produits/images/7')
+      await page.close()
+    })
+
+    it('switches the language of a page with a param', async () => {
+      const { page, messages } = await openPage('/en/node/5')
+      await page.getByTestId('lang-de').click()
+      await page.waitForURL('**/de/node/5')
+      await expect
+        .poll(async () => (await readPageState(page)).language)
+        .toBe('de')
+      expect(messages).toEqual([])
       await page.close()
     })
 

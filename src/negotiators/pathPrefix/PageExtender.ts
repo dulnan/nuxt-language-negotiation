@@ -150,7 +150,11 @@ export class PageExtender {
                   `/${lang.prefix}${getFullPagePath(page.path, '')}`,
                 )
 
-          this.addLanguageLink(lang, originalName, originalName, linkPath)
+          // The route is shared by all languages, so a link by name needs the
+          // language param.
+          this.addLanguageLink(lang, originalName, originalName, linkPath, {
+            langPrefix: lang.prefix,
+          })
         }
 
         extended.push({
@@ -238,8 +242,11 @@ export class PageExtender {
     originalName: string,
     name: string,
     path: string,
+    params?: Record<string, string>,
   ) {
-    const to = path.includes(':') ? { name } : path
+    // A path with params can only be linked by name. The other params are
+    // taken from the current route when resolving it.
+    const to = path.includes(':') ? { name, ...(params && { params }) } : path
     this.languageLinks.push({
       originalName,
       language: language.code,

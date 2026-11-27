@@ -279,6 +279,18 @@ describe('PageExtender', () => {
         `)
       })
 
+      it('links a page with a param with an empty prefix for the default language', () => {
+        const extender = createExtender(noPrefix)
+        extender.extend([{ name: 'node-id', path: '/node/:id' }])
+        expect(extender.getLanguageLinks()).toEqual({
+          'node-id': {
+            en: { name: 'node-id', params: { langPrefix: '' } },
+            de: { name: 'node-id', params: { langPrefix: 'de' } },
+            fr: { name: 'node-id', params: { langPrefix: 'fr' } },
+          },
+        })
+      })
+
       it('links the default language without a prefix', () => {
         const extender = createExtender(noPrefix)
         extender.extend([
@@ -331,6 +343,35 @@ describe('PageExtender', () => {
       extender.extend([{ name: 'about', path: '/about' }])
       expect(extender.getLanguageLinks()).toEqual({
         about: { en: '/en/about', de: '/de/about', fr: '/fr/about' },
+      })
+    })
+
+    it('links every language of a page with a param by its prefix', () => {
+      const extender = createExtender()
+      extender.extend([{ name: 'node-id', path: '/node/:id' }])
+      expect(extender.getLanguageLinks()).toEqual({
+        'node-id': {
+          en: { name: 'node-id', params: { langPrefix: 'en' } },
+          de: { name: 'node-id', params: { langPrefix: 'de' } },
+          fr: { name: 'node-id', params: { langPrefix: 'fr' } },
+        },
+      })
+    })
+
+    it('links a translated page with a param by its name', () => {
+      const extender = createExtender()
+      extender.extend([
+        {
+          name: 'product',
+          path: '/product/:id',
+          meta: { languageMapping: { de: '/produkt/:id' } },
+        },
+      ])
+      expect(extender.getLanguageLinks()).toEqual({
+        product: {
+          en: { name: 'product___en' },
+          de: { name: 'product___de' },
+        },
       })
     })
 

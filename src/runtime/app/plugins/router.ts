@@ -31,9 +31,10 @@ export default defineNuxtPlugin({
         if ('name' in v && v.name) {
           let name = v.name?.toString() || ''
           const params = { ...(v.params || {}) }
+          // An empty langPrefix is the default language without a prefix.
           if (
             routeNamesWithLanguageParam.includes(name) &&
-            !params.langPrefix
+            (params.langPrefix === undefined || params.langPrefix === null)
           ) {
             params.langPrefix = langcodeToPrefix[currentLanguage.value]
           }
