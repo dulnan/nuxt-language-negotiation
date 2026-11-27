@@ -93,9 +93,11 @@ export function defaultNoPrefixTests(nitro: NitroMajor) {
   })
 
   describe('negotiators after pathPrefix', () => {
-    // Open question: pathPrefix returns the default language for every path
-    // without a prefix, so the query, cookie and Accept-Language negotiators
-    // after it never run. These tests describe the current behavior.
+    // Intended: without a prefix, a path is in the default language, so
+    // pathPrefix returns the default language and the negotiators after it
+    // never run. That keeps pages in line with the client, which only reads
+    // the path. It also applies to API routes; the server options can handle
+    // those, because they run before the negotiators.
     it.each([
       ['the query', '/api/language?language=fr', {}],
       ['the cookie', '/api/language', { cookie: 'lang=fr' }],
