@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, sendRedirect } from 'nuxt/server'
-import { langcodeToPrefix } from '#nuxt-language-negotiation/config'
+import { baseURL, langcodeToPrefix } from '#nuxt-language-negotiation/config'
+import { withBaseURL, withoutBaseURL } from '../helpers/negotiate'
 import { useCurrentLanguage } from '../utils/useCurrentLanguage'
 
 /**
@@ -9,7 +10,8 @@ import { useCurrentLanguage } from '../utils/useCurrentLanguage'
  * Portable variant of ./frontRedirect.ts, written against nuxt/server.
  */
 export default defineEventHandler((event) => {
-  if (event.url.pathname !== '/') {
+  // On Nitro v3, the pathname includes the base URL.
+  if (withoutBaseURL(event.url.pathname, baseURL) !== '/') {
     return
   }
 
@@ -17,6 +19,6 @@ export default defineEventHandler((event) => {
   // h3 v1 event.
   const langcode = useCurrentLanguage(event as unknown as H3Event)
   const prefix = langcodeToPrefix[langcode]
-  const target = '/' + prefix + event.url.search
+  const target = withBaseURL(prefix, baseURL) + event.url.search
   return sendRedirect(event, target)
 })

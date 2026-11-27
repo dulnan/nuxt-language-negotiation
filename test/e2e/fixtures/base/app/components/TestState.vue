@@ -3,8 +3,8 @@
     <nav>
       <template v-for="link in links" :key="link.code">
         <NuxtLink
-          v-if="link.href"
-          :to="link.href"
+          v-if="link.path"
+          :to="link.path"
           :data-testid="`lang-${link.code}`"
         >
           {{ link.code }}
@@ -38,11 +38,15 @@ onMounted(() => {
 
 const links = computed(() =>
   languageLinks.value.map((link) => {
+    // href includes the base URL, path (for NuxtLink) does not.
     let href: string | null = null
+    let path: string | null = null
     let resolveError: string | null = null
     if (link.enabled && link.to) {
       try {
-        href = router.resolve(link.to).href
+        const resolved = router.resolve(link.to)
+        href = resolved.href
+        path = resolved.fullPath
       } catch (e) {
         resolveError = e instanceof Error ? e.message : String(e)
       }
@@ -52,6 +56,7 @@ const links = computed(() =>
       enabled: link.enabled,
       active: link.active,
       href,
+      path,
       resolveError,
     }
   }),
@@ -64,7 +69,7 @@ const state = computed(() =>
     routeName: route.name ?? null,
     routePath: route.path,
     statusCode: props.statusCode ?? null,
-    links: links.value,
+    links: links.value.map(({ path: _, ...link }) => link),
     hydrated: hydrated.value,
   }),
 )
