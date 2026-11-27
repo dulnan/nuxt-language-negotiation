@@ -42,6 +42,9 @@
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "prepack": "nuxt-module-build build",
     "dev": "PLAYGROUND_DEV=true nuxi dev playground",
