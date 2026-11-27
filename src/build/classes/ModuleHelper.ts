@@ -10,7 +10,7 @@ import {
   type Resolver,
 } from '@nuxt/kit'
 import { relative } from 'pathe'
-import type { Nuxt, NuxtPlugin, ResolvedNuxtTemplate } from 'nuxt/schema'
+import type { Nuxt, NuxtPlugin } from 'nuxt/schema'
 import type { LanguageBase } from './../../runtime/types'
 import type { ModuleOptions, ModuleOptionsLanguages } from './../types'
 import { defu } from 'defu'
@@ -275,15 +275,11 @@ export class ModuleHelper {
     this.tsPaths[name] = pathFromName
     this.tsPaths[name + '/*'] = pathFromName + '/*'
 
-    // Add the alias as an external so that the nitro server build doesn't fail.
-    // Nuxt passes the build.transpile entries to externals.inline (Nitro v2)
-    // or noExternals (Nitro v3).
-    this.inlineNitroExternals(name)
-    this.inlineNitroExternals(path)
-  }
-
-  public inlineNitroExternals(arg: ResolvedNuxtTemplate | string) {
-    const path = typeof arg === 'string' ? arg : arg.dst
+    // Transpile the alias, so that the nitro server build bundles it instead of
+    // treating it as an external, which would fail. Nuxt passes the
+    // build.transpile entries to externals.inline (Nitro v2) or noExternals
+    // (Nitro v3).
+    this.transpile(name)
     this.transpile(path)
   }
 
