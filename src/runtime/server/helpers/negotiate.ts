@@ -31,7 +31,8 @@ export function languageFromPath(
       ? query.url
       : path
 
-  const matches = /\/([^/]+)/.exec(actualPath)
+  // The first path segment, without the query or hash.
+  const matches = /^\/([^/?#]+)/.exec(actualPath)
   const prefix = matches?.[1]
 
   if (prefix) {
