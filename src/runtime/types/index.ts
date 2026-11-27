@@ -26,8 +26,8 @@ export type BuiltInNegotiators =
   | 'queryString'
   | 'cookie'
 
-export type ServerNegotiator = {
-  negotiate: (event: H3Event) => string | null | undefined
+export type ServerNegotiator<E = H3Event> = {
+  negotiate: (event: E) => string | null | undefined
 }
 
 export type LanguageBase<T extends string = string> = {

@@ -6,6 +6,7 @@ import {
   addTemplate,
   addTypeTemplate,
   createResolver,
+  resolveServerVariant,
   type Resolver,
 } from '@nuxt/kit'
 import { relative } from 'pathe'
@@ -147,7 +148,6 @@ export class ModuleHelper {
 
   private serverNegotiators: ServerNegotiator[] = []
 
-  private nitroExternals: string[] = []
   private tsPaths: Record<string, string> = {}
 
   public readonly languages: LanguageBase[]
@@ -276,13 +276,14 @@ export class ModuleHelper {
     this.tsPaths[name + '/*'] = pathFromName + '/*'
 
     // Add the alias as an external so that the nitro server build doesn't fail.
+    // Nuxt passes the build.transpile entries to externals.inline (Nitro v2)
+    // or noExternals (Nitro v3).
     this.inlineNitroExternals(name)
     this.inlineNitroExternals(path)
   }
 
   public inlineNitroExternals(arg: ResolvedNuxtTemplate | string) {
     const path = typeof arg === 'string' ? arg : arg.dst
-    this.nitroExternals.push(path)
     this.transpile(path)
   }
 
@@ -291,11 +292,6 @@ export class ModuleHelper {
   }
 
   public applyBuildConfig() {
-    // Workaround for https://github.com/nuxt/nuxt/issues/28995
-    this.nuxt.options.nitro.externals ||= {}
-    this.nuxt.options.nitro.externals.inline ||= []
-    this.nuxt.options.nitro.externals.inline.push(...this.nitroExternals)
-
     // Currently needed due to a bug in Nuxt that does not add aliases for
     // nitro. As this has happened before in the past, let's leave it so that
     // we are guaranteed to have these aliases also for server types.
@@ -356,12 +352,17 @@ export class ModuleHelper {
     )
   }
 
-  public addServerMiddleware(name: string) {
+  public addServerMiddleware(name: string, route: string) {
+    const path = './runtime/server/middleware/' + name
     addServerHandler({
-      handler: this.resolvers.module.resolve(
-        './runtime/server/middleware/' + name,
-      ),
+      // @nuxt/kit picks the portable variant on Nitro v3 and the h3 variant on
+      // Nitro v2.
+      handler: {
+        nuxt: this.resolvers.module.resolve(path + '.portable'),
+        nitro2: this.resolvers.module.resolve(path),
+      },
       middleware: true,
+      route,
     })
   }
 
@@ -382,9 +383,16 @@ export class ModuleHelper {
   }
 
   public addServerNegotiator(name: string, options: object = {}) {
-    const filePath = this.resolvers.module.resolve(
-      `./runtime/server/negotiator/${name}`,
-    )
+    const path = `./runtime/server/negotiator/${name}`
+    // Same as for addServerMiddleware(): the portable variant on Nitro v3, the
+    // h3 variant on Nitro v2.
+    const filePath = resolveServerVariant({
+      nuxt: this.resolvers.module.resolve(path + '.portable'),
+      nitro2: this.resolvers.module.resolve(path),
+    })
+    if (!filePath) {
+      return
+    }
     this.serverNegotiators.push({
       name,
       filePath,

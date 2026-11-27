@@ -28,8 +28,9 @@ export default defineLanguageNegotiator('pathPrefix', (helper) => {
 
   // Only do this when all languages have a prefix.
   if (!helper.defaultLanguageNoPrefix) {
-    // Handle the redirect already on the server.
-    helper.addServerMiddleware('frontRedirect')
+    // Handle the redirect already on the server. Nitro v2 runs middleware with
+    // the route "/" for every path, Nitro v3 only for "/".
+    helper.addServerMiddleware('frontRedirect', '/')
 
     // The plugin is only needs to run on the client.
     helper.addPlugin('frontRedirect', 'client')
