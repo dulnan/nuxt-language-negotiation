@@ -23,3 +23,4 @@ export const langcodeToPrefix = Object.freeze<Record<Langcode, string>>({
   fr: 'fr',
   en: 'en',
 })
+export const baseURL = '/'

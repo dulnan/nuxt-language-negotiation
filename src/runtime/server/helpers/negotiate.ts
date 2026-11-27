@@ -18,6 +18,30 @@ import { isValidLanguage } from '../../helpers/isValidLanguage'
  */
 
 /**
+ * Remove the base URL from the start of a path, once. A path that does not
+ * start with the base URL is returned as it is.
+ */
+export function withoutBaseURL(path: string, baseURL: string): string {
+  const base = baseURL.replace(/\/+$/, '')
+  if (
+    !base ||
+    (path !== base &&
+      !path.startsWith(base + '/') &&
+      !path.startsWith(base + '?'))
+  ) {
+    return path
+  }
+  return '/' + path.slice(base.length).replace(/^\//, '')
+}
+
+/**
+ * Prefix a path with the base URL.
+ */
+export function withBaseURL(path: string, baseURL: string): string {
+  return baseURL.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '')
+}
+
+/**
  * Get the query from URLSearchParams in the shape of getQuery() of h3: a
  * repeated key gives an array of its values. The portable negotiators use it,
  * so that they get the same results as the h3 ones.

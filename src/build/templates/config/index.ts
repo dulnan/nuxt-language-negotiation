@@ -13,6 +13,7 @@ export const defaultLanguageNoPrefix = ${JSON.stringify(helper.defaultLanguageNo
 export const defaultLangcode = ${JSON.stringify(helper.defaultLanguage.code)};
 export const prefixToLangcode = Object.freeze(${JSON.stringify(helper.prefixToLangcode, null, 2)});
 export const langcodeToPrefix = Object.freeze(${JSON.stringify(helper.langcodeToPrefix, null, 2)});
+export const baseURL = ${JSON.stringify(helper.nuxt.options.app.baseURL)};
 `
   },
   (helper) => {
@@ -76,6 +77,11 @@ declare module '#nuxt-language-negotiation/config' {
    * A map of language codes to prefixes.
    */
   export const langcodeToPrefix: Readonly<Record<Langcode, string>>;
+
+  /**
+   * The app.baseURL at build time.
+   */
+  export const baseURL: string;
 }
 `
   },
