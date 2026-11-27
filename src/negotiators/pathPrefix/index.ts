@@ -23,6 +23,17 @@ export const routeNamesWithLanguageParam = Object.freeze(${JSON.stringify(routeN
  * Negotiates the language based on a path prefix.
  */
 export default defineLanguageNegotiator('pathPrefix', (helper) => {
+  // Only the default language can be without a prefix: the routes and the
+  // front redirect rely on it.
+  const withoutPrefix = helper.languages
+    .filter((v) => v.prefix === '' && v.code !== helper.defaultLanguage.code)
+    .map((v) => `"${v.code}"`)
+  if (withoutPrefix.length) {
+    throw new Error(
+      `The pathPrefix negotiator needs a prefix for every language except the default language "${helper.defaultLanguage.code}". Languages without a prefix: ${withoutPrefix.join(', ')}.`,
+    )
+  }
+
   helper.addServerNegotiator('pathPrefix')
   helper.addPlugin('router')
 
