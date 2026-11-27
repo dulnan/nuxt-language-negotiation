@@ -1,6 +1,6 @@
 import type { RequestEvent } from 'nuxt/server'
 import { defineServerNegotiator } from '../helpers/defineServerNegotiator'
-import { languageFromQuery } from '../helpers/negotiate'
+import { languageFromQuery, queryFromSearchParams } from '../helpers/negotiate'
 
 /**
  * Negotiate the language based on a query string value.
@@ -11,7 +11,7 @@ export default defineServerNegotiator<{ keys: string[] }, RequestEvent>(
   (options) => {
     return {
       negotiate(event) {
-        const query = Object.fromEntries(event.url.searchParams)
+        const query = queryFromSearchParams(event.url.searchParams)
         return languageFromQuery(query, options.keys)
       },
     }

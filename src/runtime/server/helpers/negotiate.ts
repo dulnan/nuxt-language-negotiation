@@ -18,6 +18,28 @@ import { isValidLanguage } from '../../helpers/isValidLanguage'
  */
 
 /**
+ * Get the query from URLSearchParams in the shape of getQuery() of h3: a
+ * repeated key gives an array of its values. The portable negotiators use it,
+ * so that they get the same results as the h3 ones.
+ */
+export function queryFromSearchParams(
+  params: URLSearchParams,
+): Record<string, string | string[]> {
+  const query: Record<string, string | string[]> = Object.create(null)
+  for (const [key, value] of params) {
+    const existing = query[key]
+    if (existing === undefined) {
+      query[key] = value
+    } else if (Array.isArray(existing)) {
+      existing.push(value)
+    } else {
+      query[key] = [existing, value]
+    }
+  }
+  return query
+}
+
+/**
  * Get the language from the path prefix.
  */
 export function languageFromPath(
