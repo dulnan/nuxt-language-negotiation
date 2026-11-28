@@ -1,6 +1,6 @@
 import type { NuxtPage } from 'nuxt/schema'
 import type { ModuleHelper } from './../../build/classes/ModuleHelper'
-import type { RouteLocationRaw } from 'vue-router'
+import type { BuildLanguageLink } from '../../build/templates/routes/index'
 import { cleanPagePath, getFullPagePath } from '../../build/helpers/pages'
 import { logger, nonNullish } from '../../build/helpers'
 import type { LanguageBase } from '../../runtime/types'
@@ -8,10 +8,10 @@ import type { LanguageBase } from '../../runtime/types'
 export type BuildLanguageLinks = {
   originalName: string
   language: string
-  to: RouteLocationRaw
+  to: BuildLanguageLink
 }
 
-export type LanguageLinksMap = Record<string, Record<string, RouteLocationRaw>>
+export type LanguageLinksMap = Record<string, Record<string, BuildLanguageLink>>
 
 export type BuiltPage = {
   originalName: string

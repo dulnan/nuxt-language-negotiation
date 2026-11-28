@@ -15,8 +15,8 @@ export type ModuleTemplate = {
 
 export function defineTemplate(
   options: ModuleTemplateOptions,
-  build: (helper: ModuleHelper) => string,
-  buildTypes: (helper: ModuleHelper) => string,
+  build: ModuleTemplate['build'],
+  buildTypes: ModuleTemplate['buildTypes'],
 ): ModuleTemplate {
   return { options, build, buildTypes }
 }

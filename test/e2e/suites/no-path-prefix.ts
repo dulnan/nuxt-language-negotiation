@@ -38,6 +38,26 @@ export function noPathPrefixTests(nitro: NitroMajor) {
     })
   })
 
+  describe('language links', () => {
+    it('disables every language of a page', async () => {
+      const state = await getState('/suchen', { acceptLanguage: 'fr' })
+      expect(state.links.map((v) => [v.code, v.enabled, v.active])).toEqual([
+        ['de', false, false],
+        ['en', false, false],
+        ['fr', false, true],
+      ])
+    })
+
+    it('links the pages from definePageLanguageLinks', async () => {
+      const state = await getState('/en/page-1', { acceptLanguage: 'fr' })
+      expect(state.links.map((v) => [v.code, v.href, v.active])).toEqual([
+        ['de', '/de/seite-1', false],
+        ['en', '/en/page-1', false],
+        ['fr', '/fr/page-1', true],
+      ])
+    })
+  })
+
   describe('browser', () => {
     it.each([
       ['/', { acceptLanguage: 'fr' }, 'fr'],
