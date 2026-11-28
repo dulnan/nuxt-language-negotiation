@@ -1,7 +1,7 @@
 {
   "name": "nuxt-language-negotiation",
   "version": "2.0.2",
-  "description": "Simple language negotiation for Nuxt 3.",
+  "description": "Simple language negotiation for Nuxt.",
   "repository": "github:dulnan/nuxt-language-negotiation",
   "keywords": [
     "nuxt",
@@ -53,7 +53,7 @@
     "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "PLAYGROUND_MODULE_BUILD=true nuxt-module-build build --stub && PLAYGROUND_MODULE_BUILD=true nuxt-module-build prepare && nuxi prepare playground",
     "generate": "nuxi generate",
-    "typecheck": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
+    "typecheck": "vue-tsc --noEmit && vue-tsc --noEmit -p test/types && cd playground && vue-tsc --noEmit",
     "prettier": "prettier ./src ./test --check",
     "prettier:fix": "prettier ./src ./test --write",
     "lint": "eslint ./src ./test",

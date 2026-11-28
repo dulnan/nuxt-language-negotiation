@@ -4,9 +4,14 @@ import {
   getBuiltNitroVersion,
   getJson,
   getState,
-  knownIssue,
   openPage,
+  readFetchLanguages,
+  readLinkHref,
+  readPageFetchLanguages,
   readPageState,
+  readSlowPageLanguage,
+  releaseSlowPage,
+  waitForSlowPage,
   request,
 } from '../helpers'
 
@@ -238,6 +243,18 @@ export function prefixedTests(nitro: NitroMajor) {
     })
   })
 
+  describe('links by name', () => {
+    it.each([
+      ['/fr/about', '/fr/about/team'],
+      ['/ch/about', '/ch/about/team'],
+      ['/de/about/team', '/de/about/team'],
+    ])('renders %s with a link to the nested page %s', async (path, href) => {
+      const response = await request(path)
+      expect(response.status).toBe(200)
+      expect(readLinkHref(response.body, 'to-team')).toBe(href)
+    })
+  })
+
   describe('language links', () => {
     it('links the mapped variants and disables missing ones', async () => {
       const state = await getState('/de/suchen')
@@ -246,6 +263,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'de',
           enabled: true,
           active: true,
+          to: '/de/suchen',
           href: '/de/suchen',
           resolveError: null,
         },
@@ -253,6 +271,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'en',
           enabled: true,
           active: false,
+          to: '/en/search',
           href: '/en/search',
           resolveError: null,
         },
@@ -260,6 +279,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'fr',
           enabled: true,
           active: false,
+          to: '/fr/rechercher',
           href: '/fr/rechercher',
           resolveError: null,
         },
@@ -267,6 +287,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'gsw_CH',
           enabled: false,
           active: false,
+          to: null,
           href: null,
           resolveError: null,
         },
@@ -303,31 +324,94 @@ export function prefixedTests(nitro: NitroMajor) {
       ])
     })
 
-    // Known issue: for a page without a mapping and with a param, every
-    // language link is { name }, and the router plugin fills in the prefix of
-    // the current language.
-    knownIssue('links every language of a page with a param', async () => {
+    it('links every language of a page with a param', async () => {
       const state = await getState('/en/node/5')
-      expect(state.links.map((v) => [v.code, v.href])).toEqual([
-        ['de', '/de/node/5'],
-        ['en', '/en/node/5'],
-        ['fr', '/fr/node/5'],
-        ['gsw_CH', '/ch/node/5'],
+      expect(state.links.map((v) => [v.code, v.href, v.active])).toEqual([
+        ['de', '/de/node/5', false],
+        ['en', '/en/node/5', true],
+        ['fr', '/fr/node/5', false],
+        ['gsw_CH', '/ch/node/5', false],
       ])
     })
 
-    // Known issue: the links of a child page without a mapping, in a parent
-    // without a mapping, leave out the parent path.
-    knownIssue(
-      'links the full path of a nested page without a mapping',
-      async () => {
-        const state = await getState('/fr/about/team')
-        expect(state.links.map((v) => [v.code, v.href])).toEqual([
-          ['de', '/de/about/team'],
-          ['en', '/en/about/team'],
-          ['fr', '/fr/about/team'],
-          ['gsw_CH', '/ch/about/team'],
-        ])
+    it('links the full path of a nested page without a mapping', async () => {
+      const state = await getState('/fr/about/team')
+      expect(state.links.map((v) => [v.code, v.href])).toEqual([
+        ['de', '/de/about/team'],
+        ['en', '/en/about/team'],
+        ['fr', '/fr/about/team'],
+        ['gsw_CH', '/ch/about/team'],
+      ])
+    })
+
+    it('links the pages set in the state like vuepal does', async () => {
+      const state = await getState('/en/cms-page')
+      expect(state.links.map((v) => [v.code, v.to, v.active])).toEqual([
+        ['de', '/de/cms-seite', false],
+        ['en', '/en/cms-page', true],
+        ['fr', '/fr/page-cms', false],
+        ['gsw_CH', null, false],
+      ])
+    })
+
+    // Apps render the links as <a :href="link.to">.
+    it.each(['/de/suchen', '/fr', '/de/produkte', '/en/page-1'])(
+      'links the languages of %s by path',
+      async (path) => {
+        const state = await getState(path)
+        for (const link of state.links.filter((v) => v.enabled)) {
+          expect(link.to).toBe(link.href)
+        }
+      },
+    )
+  })
+
+  describe('route names', () => {
+    // Apps read the language from the route name, and link by
+    // meta.originalName.
+    it.each([
+      ['/fr/rechercher', 'search___fr', 'search'],
+      ['/ch/produkt/7', 'products-detail___gsw_CH', 'products-detail'],
+      ['/fr', 'index', 'index'],
+      ['/fr/node/5', 'node-id', 'node-id'],
+    ])('names the route of %s %s', async (path, routeName, originalName) => {
+      const state = await getState(path)
+      expect(state.routeName).toBe(routeName)
+      expect(state.originalName).toBe(originalName)
+    })
+  })
+
+  describe('links by the current route', () => {
+    // Like a pagination: { name: route.name, params: route.params, query }.
+    it.each([
+      ['/fr/rechercher', '/fr/rechercher?page=2'],
+      ['/fr', '/fr?page=2'],
+      ['/ch/produkt/7', '/ch/produkt/7?page=2'],
+      ['/en/node/5', '/en/node/5?page=2'],
+      ['/en/page-1', '/en/page-1?page=2'],
+    ])('links %s to %s', async (path, href) => {
+      expect((await getState(path)).paginationHref).toBe(href)
+    })
+  })
+
+  describe('server code', () => {
+    it('imports the config', async () => {
+      expect(await getJson('/api/config')).toEqual({
+        defaultLangcode: 'de',
+        langcodes: ['de', 'en', 'fr', 'gsw_CH'],
+      })
+    })
+  })
+
+  describe('data fetching', () => {
+    it.each([
+      ['/fr/rechercher', {}, 'fr'],
+      ['/de/suchen', { headers: { 'x-force-language': 'en' } }, 'en'],
+    ])(
+      'fetches the data of %s in the page language',
+      async (path, options, language) => {
+        const response = await request(path, options)
+        expect(readFetchLanguages(response.body)).toEqual([language, language])
       },
     )
   })
@@ -389,6 +473,17 @@ export function prefixedTests(nitro: NitroMajor) {
       await page.close()
     })
 
+    it('switches the language of a page with a param', async () => {
+      const { page, messages } = await openPage('/en/node/5')
+      await page.getByTestId('lang-de').click()
+      await page.waitForURL('**/de/node/5')
+      await expect
+        .poll(async () => (await readPageState(page)).language)
+        .toBe('de')
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
     it('switches the language with a language link', async () => {
       const { page, messages } = await openPage('/de/suchen')
       await page.getByTestId('lang-en').click()
@@ -400,26 +495,128 @@ export function prefixedTests(nitro: NitroMajor) {
       await page.close()
     })
 
-    // Known issue: on the client, useCurrentLanguage() only reads the path.
-    // Without a prefix, the server negotiates fr from Accept-Language, but the
-    // client falls back to the default language: a hydration mismatch.
-    knownIssue(
-      'hydrates a page without a prefix in the negotiated language',
-      async () => {
-        const { page, messages } = await openPage('/unprefixed-page', {
-          acceptLanguage: 'fr',
-        })
-        const state = await readPageState(page)
-        expect(messages).toEqual([])
-        expect(state.language).toBe('fr')
-        await page.close()
-      },
-    )
+    it('hydrates a page without a prefix in the negotiated language', async () => {
+      const { page, messages } = await openPage('/unprefixed-page', {
+        acceptLanguage: 'fr',
+      })
+      const state = await readPageState(page)
+      expect(messages).toEqual([])
+      expect(state.language).toBe('fr')
+      await page.close()
+    })
 
-    // Known issue: the router plugin renames { name } to name___<lang> for a
-    // child page without a mapping in a parent without a mapping, but that
-    // route does not exist.
-    knownIssue('resolves a nested page without a mapping by name', async () => {
+    it('hydrates a page in the language of the server options', async () => {
+      const { page, messages } = await openPage('/fr', {
+        headers: { 'x-force-language': 'en' },
+      })
+      expect((await readPageState(page)).language).toBe('en')
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('keeps the language when navigating to a page without a prefix', async () => {
+      const { page, messages } = await openPage('/fr', { acceptLanguage: 'de' })
+      await page.getByTestId('to-unprefixed').click()
+      await page.waitForURL('**/unprefixed-page')
+      await expect
+        .poll(async () => (await readPageState(page)).routeName)
+        .toBe('slug')
+      expect((await readPageState(page)).language).toBe('fr')
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('keeps a language switched on the client for a page without a prefix', async () => {
+      const { page } = await openPage('/de/suchen')
+      await page.getByTestId('lang-en').click()
+      await page.waitForURL('**/en/search')
+      await page.getByTestId('to-unprefixed').click()
+      await page.waitForURL('**/unprefixed-page')
+      await expect
+        .poll(async () => (await readPageState(page)).routeName)
+        .toBe('slug')
+      expect((await readPageState(page)).language).toBe('en')
+      await page.close()
+    })
+
+    it('takes the language from the prefix after a page without a prefix', async () => {
+      const { page } = await openPage('/unprefixed-page', {
+        acceptLanguage: 'fr',
+      })
+      await page.evaluate(() =>
+        (window as any).useNuxtApp().$router.push('/en/search'),
+      )
+      await page.waitForURL('**/en/search')
+      await expect
+        .poll(async () => (await readPageState(page)).language)
+        .toBe('en')
+      await page.close()
+    })
+
+    it('fetches the data of the next page in its language', async () => {
+      const { page, messages } = await openPage('/de/suchen')
+      expect(await readPageFetchLanguages(page)).toEqual(['de', 'de'])
+      await page.getByTestId('lang-fr').click()
+      await page.waitForURL('**/fr/rechercher')
+      await expect
+        .poll(() => readPageFetchLanguages(page))
+        .toEqual(['fr', 'fr'])
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('changes the language once per language switch', async () => {
+      const { page } = await openPage('/de/suchen')
+      expect((await readPageState(page)).languageChanges).toEqual([])
+
+      await page.getByTestId('lang-fr').click()
+      await page.waitForURL('**/fr/rechercher')
+      await expect
+        .poll(async () => (await readPageState(page)).languageChanges)
+        .toEqual(['fr'])
+
+      // Within the same language.
+      await page.evaluate(() =>
+        (window as any).useNuxtApp().$router.push('/fr/produits/7'),
+      )
+      await page.waitForURL('**/fr/produits/7')
+      await expect
+        .poll(async () => (await readPageState(page)).routePath)
+        .toBe('/fr/produits/7')
+      expect((await readPageState(page)).languageChanges).toEqual(['fr'])
+
+      await page.getByTestId('lang-en').click()
+      await page.waitForURL('**/en/products/7')
+      await expect
+        .poll(async () => (await readPageState(page)).languageChanges)
+        .toEqual(['fr', 'en'])
+      await page.close()
+    })
+
+    it('keeps the language of a page until the next page is shown', async () => {
+      const { page, messages } = await openPage('/de/slow')
+      await page.getByTestId('lang-fr').click()
+      await page.waitForURL('**/fr/slow')
+      await waitForSlowPage(page)
+
+      // While the next page loads, the previous page and everything outside
+      // of the page stay in the previous language.
+      expect(await readSlowPageLanguage(page)).toBe('de')
+      const loading = await readPageState(page)
+      expect(loading.language).toBe('de')
+      expect(loading.languageChanges).toEqual([])
+
+      await releaseSlowPage(page)
+      await expect.poll(() => readSlowPageLanguage(page)).toBe('fr')
+      await expect
+        .poll(async () => (await readPageState(page)).languageChanges)
+        .toEqual(['fr'])
+      expect((await readPageState(page)).language).toBe('fr')
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('resolves a nested page without a mapping by name', async () => {
       const { page } = await openPage('/fr/about/team')
       const href = await page.evaluate(() => {
         try {

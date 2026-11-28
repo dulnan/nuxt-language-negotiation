@@ -2,21 +2,31 @@ import { PageExtender, type LanguageLinksMap } from './PageExtender'
 import { defineLanguageNegotiator } from './../defineLanguageNegotiator'
 import { extendPages } from '@nuxt/kit'
 import type { NuxtPage } from 'nuxt/schema'
+import type { RoutesTemplateData } from '../../build/templates/routes/index'
 
-function buildTemplate(links: LanguageLinksMap, routes: NuxtPage[]): string {
-  const routeNamesWithoutMapping = routes
-    .map((v) => (v.name && !v.name.includes('___') ? v.name : null))
-    .filter(Boolean)
+/**
+ * All routes, including the children.
+ */
+function flattenRoutes(routes: NuxtPage[]): NuxtPage[] {
+  return routes.flatMap((v) => [v, ...flattenRoutes(v.children || [])])
+}
 
-  const routeNamesWithLanguageParam = routes
-    .map((v) => (v.path.includes(':langPrefix') && v.name ? v.name : null))
-    .filter(Boolean)
+function buildRoutes(
+  links: LanguageLinksMap,
+  routes: NuxtPage[],
+): RoutesTemplateData {
+  // The router plugin needs these for child routes too.
+  const allRoutes = flattenRoutes(routes)
 
-  return `
-export const pageLanguageLinks = Object.freeze(${JSON.stringify(links, null, 2)});
-export const routeNamesWithoutMapping = Object.freeze(${JSON.stringify(routeNamesWithoutMapping)});
-export const routeNamesWithLanguageParam = Object.freeze(${JSON.stringify(routeNamesWithLanguageParam)});
-`
+  return {
+    pageLanguageLinks: links,
+    routeNamesWithoutMapping: allRoutes
+      .map((v) => (v.name && !v.name.includes('___') ? v.name : null))
+      .filter((v) => v !== null),
+    routeNamesWithLanguageParam: allRoutes
+      .map((v) => (v.path.includes(':langPrefix') && v.name ? v.name : null))
+      .filter((v) => v !== null),
+  }
 }
 
 /**
@@ -55,47 +65,13 @@ export default defineLanguageNegotiator('pathPrefix', (helper) => {
     'languageMapping',
   )
 
-  const state: { template: string } = {
-    template: '',
-  }
-
-  helper.addTemplate({
-    options: {
-      name: 'routes',
-    },
-    build() {
-      return () => state.template.trim()
-    },
-    buildTypes() {
-      return `import type { RouteLocationRaw } from 'vue-router'
-import type { Langcode } from '#nuxt-language-negotiation/config'
-
-declare module '#nuxt-language-negotiation/routes' {
-  /**
-   * The page language links determined at build time.
-   */
-  export const pageLanguageLinks: Readonly<Record<string, Partial<Record<Langcode, RouteLocationRaw>>>>;
-
-  /**
-   * Names of routes that have a "catch all" language param.
-   */
-  export const routeNamesWithLanguageParam: Readonly<string[]>;
-
-  /**
-   * Names of routes that do not have language mapping.
-   */
-  export const routeNamesWithoutMapping: Readonly<string[]>;
-}`
-    },
-  })
-
   extendPages((pages) => {
     const extender = new PageExtender(helper)
     const translated = extender.extend(pages)
     if (extender.hasError() && !helper.isDev) {
       throw new Error('Failed to translate pages.')
     }
-    state.template = buildTemplate(extender.getLanguageLinks(), translated)
+    helper.routes = buildRoutes(extender.getLanguageLinks(), translated)
     pages.length = 0
     pages.push(...translated)
     extender.logMessagesToConsole()

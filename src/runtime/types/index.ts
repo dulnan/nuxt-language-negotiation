@@ -16,8 +16,12 @@ export type LanguageLinkBase<T extends string = string> = {
   active: boolean
 } & (LanguageLinkAvailable | LanguageLinkDisabled)
 
-export type ServerOptions<T extends string = string> = {
-  negotiate?: (event: H3Event) => T | null | undefined
+export type ServerOptions = {
+  /**
+   * Negotiate the language before the negotiators. A result that is not a
+   * language code is skipped, and the negotiators decide.
+   */
+  negotiate?: (event: H3Event) => string | null | undefined
 }
 
 export type BuiltInNegotiators =

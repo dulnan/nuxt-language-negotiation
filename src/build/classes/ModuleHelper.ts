@@ -16,6 +16,7 @@ import type { ModuleOptions, ModuleOptionsLanguages } from './../types'
 import { defu } from 'defu'
 import { fileExists, logger } from './../helpers'
 import type { ModuleTemplate } from './../templates/defineTemplate'
+import type { RoutesTemplateData } from './../templates/routes/index'
 import ISO6391 from 'iso-639-1'
 
 /**
@@ -155,6 +156,15 @@ export class ModuleHelper {
   public readonly defaultLanguageNoPrefix: boolean
   public readonly prefixToLangcode: Record<string, string>
   public readonly langcodeToPrefix: Record<string, string>
+
+  /**
+   * The data of the routes template. Empty without the pathPrefix negotiator.
+   */
+  public routes: RoutesTemplateData = {
+    pageLanguageLinks: {},
+    routeNamesWithoutMapping: [],
+    routeNamesWithLanguageParam: [],
+  }
 
   constructor(
     public nuxt: Nuxt,

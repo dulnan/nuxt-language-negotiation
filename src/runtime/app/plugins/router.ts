@@ -5,16 +5,25 @@ import type {
   RouteLocationAsPath,
   RouteLocationNormalizedLoaded,
 } from 'vue-router'
-import { useRouter, defineNuxtPlugin, useCurrentLanguage } from '#imports'
+import {
+  useRouter,
+  defineNuxtPlugin,
+  useCurrentLanguage,
+  useState,
+} from '#imports'
 import {
   routeNamesWithLanguageParam,
   routeNamesWithoutMapping,
   pageLanguageLinks,
 } from '#nuxt-language-negotiation/routes'
 import {
+  type Langcode,
   defaultLangcode,
+  defaultLanguageNoPrefix,
   langcodeToPrefix,
 } from '#nuxt-language-negotiation/config'
+import { getLanguageFromPath, LANGUAGE_STATE_KEY } from '../../helpers'
+import { getRouteLanguages } from '../helpers/routeLanguages'
 
 /**
  * Replaces methods on the vue-router instance to handle translated routes.
@@ -22,18 +31,43 @@ import {
 export default defineNuxtPlugin({
   name: 'nuxt-language-negotiation:router',
   dependsOn: ['nuxt:router'],
-  setup() {
+  setup(nuxtApp) {
     const router = useRouter()
     const currentLanguage = useCurrentLanguage()
+
+    // Record the language of each route after client-side navigation. The
+    // first page has the language the server negotiated.
+    if (import.meta.client) {
+      const negotiated = useState<Langcode>(LANGUAGE_STATE_KEY)
+      const routeLanguages = getRouteLanguages(nuxtApp)
+      router.afterEach((to, from, failure) => {
+        if (failure || nuxtApp.isHydrating) {
+          return
+        }
+        const fromPath = getLanguageFromPath(to.path) as Langcode | undefined
+        if (fromPath) {
+          routeLanguages.set(to.fullPath, fromPath)
+        } else if (defaultLanguageNoPrefix) {
+          routeLanguages.set(to.fullPath, defaultLangcode)
+        } else {
+          // A path without a prefix keeps the language of the previous page.
+          routeLanguages.set(
+            to.fullPath,
+            routeLanguages.get(from.fullPath) ?? negotiated.value,
+          )
+        }
+      })
+    }
 
     function translateLocation(v: RouteLocationRaw): RouteLocationRaw {
       if (typeof v === 'object') {
         if ('name' in v && v.name) {
           let name = v.name?.toString() || ''
           const params = { ...(v.params || {}) }
+          // An empty langPrefix is the default language without a prefix.
           if (
             routeNamesWithLanguageParam.includes(name) &&
-            !params.langPrefix
+            (params.langPrefix === undefined || params.langPrefix === null)
           ) {
             params.langPrefix = langcodeToPrefix[currentLanguage.value]
           }

@@ -1,6 +1,15 @@
-import { getLanguageFromPath } from './../../helpers'
+import { getLanguageFromPath, LANGUAGE_STATE_KEY } from './../../helpers'
 import { toValidLanguage } from './../../helpers/toValidLanguage'
-import { useRoute, computed, type ComputedRef, useRequestEvent } from '#imports'
+import { getRouteLanguages } from './../helpers/routeLanguages'
+import {
+  useRoute,
+  useNuxtApp,
+  computed,
+  type ComputedRef,
+  type Ref,
+  useRequestEvent,
+  useState,
+} from '#imports'
 import {
   type Langcode,
   type Language,
@@ -25,41 +34,54 @@ export function useCurrentLanguage(): ComputedRef<Langcode>
 
 /**
  * Get the current language code or langage object.
+ *
+ * On the server, this is the negotiated language. The client gets it through
+ * the payload, so that it hydrates in the same language.
+ *
+ * After client-side navigation, it's the language of the route useRoute()
+ * returns. In a page, that's the page's own route, so a page keeps its
+ * language until it's replaced. Elsewhere, it's the route of the page that is
+ * shown, which changes once the next page has loaded.
  */
 export function useCurrentLanguage(options?: {
   full: true
 }): ComputedRef<Language> | ComputedRef<Langcode> {
-  // On the server, we can use the already negotiated language.
-  if (import.meta.server) {
-    const event = useRequestEvent()
+  const negotiated = useState<Langcode>(LANGUAGE_STATE_KEY, () => {
+    if (import.meta.server) {
+      const event = useRequestEvent()
 
-    // This *really* should not be possible, because this code is only executed
-    // on the server, where by all means a request event should be available.
-    if (!event) {
-      throw new Error('Failed to get request event.')
+      // This *really* should not be possible, because this code is only
+      // executed on the server, where by all means a request event should be
+      // available.
+      if (!event) {
+        throw new Error('Failed to get request event.')
+      }
+
+      return nitroUseCurrentLanguage(event)
     }
 
-    const negotiatedLanguage = nitroUseCurrentLanguage(event)
+    // Not negotiated on the server, e.g. with ssr: false.
+    return toValidLanguage(getLanguageFromPath(useRoute().path))
+  })
 
-    if (options?.full) {
-      return computed<Language>(() => {
-        return languages.find((v) => v.code === negotiatedLanguage)!
-      })
-    }
+  const language = import.meta.client
+    ? useRouteLanguage(negotiated)
+    : negotiated
 
-    return computed<Langcode>(() => negotiatedLanguage)
-  } else {
-    const route = useRoute()
-    if (options?.full) {
-      return computed<Language>(() => {
-        const language = getLanguageFromPath(route.path)
-        const langcode = toValidLanguage(language)
-        return languages.find((v) => v.code === langcode)!
-      })
-    }
-
-    return computed<Langcode>(() => {
-      return toValidLanguage(getLanguageFromPath(route.path))
+  if (options?.full) {
+    return computed<Language>(() => {
+      return languages.find((v) => v.code === language.value)!
     })
   }
+
+  return computed<Langcode>(() => language.value)
+}
+
+/**
+ * The language of the current route on the client.
+ */
+function useRouteLanguage(negotiated: Ref<Langcode>): ComputedRef<Langcode> {
+  const route = useRoute()
+  const routeLanguages = getRouteLanguages(useNuxtApp())
+  return computed(() => routeLanguages.get(route.fullPath) ?? negotiated.value)
 }

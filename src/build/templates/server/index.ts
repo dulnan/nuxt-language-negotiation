@@ -49,13 +49,12 @@ export { serverOptions }
   (helper) => {
     return `
 import type { ServerOptions, ServerNegotiator } from '${helper.paths.runtimeTypes}'
-import type { Langcode } from '#nuxt-language-negotiation/config'
 
 declare module '#nuxt-language-negotiation/server' {
   /**
    * The user-provided server options.
    */
-  export const serverOptions: ServerOptions<Langcode>
+  export const serverOptions: ServerOptions
 
   /**
    * The available server negotiator instances.

@@ -279,6 +279,34 @@ describe('PageExtender', () => {
         `)
       })
 
+      it('links a page with a param with an empty prefix for the default language', () => {
+        const extender = createExtender(noPrefix)
+        extender.extend([{ name: 'node-id', path: '/node/:id' }])
+        expect(extender.getLanguageLinks()).toEqual({
+          'node-id': {
+            en: { name: 'node-id', params: { langPrefix: '' } },
+            de: { name: 'node-id', params: { langPrefix: 'de' } },
+            fr: { name: 'node-id', params: { langPrefix: 'fr' } },
+          },
+        })
+      })
+
+      it('links the full path of a nested page without a mapping', () => {
+        const extender = createExtender(noPrefix)
+        extender.extend([
+          {
+            name: 'parent',
+            path: '/parent',
+            children: [{ name: 'child', path: 'child' }],
+          },
+        ])
+        expect(extender.getLanguageLinks().child).toEqual({
+          en: '/parent/child',
+          de: '/de/parent/child',
+          fr: '/fr/parent/child',
+        })
+      })
+
       it('links the default language without a prefix', () => {
         const extender = createExtender(noPrefix)
         extender.extend([
@@ -334,6 +362,35 @@ describe('PageExtender', () => {
       })
     })
 
+    it('links every language of a page with a param by its prefix', () => {
+      const extender = createExtender()
+      extender.extend([{ name: 'node-id', path: '/node/:id' }])
+      expect(extender.getLanguageLinks()).toEqual({
+        'node-id': {
+          en: { name: 'node-id', params: { langPrefix: 'en' } },
+          de: { name: 'node-id', params: { langPrefix: 'de' } },
+          fr: { name: 'node-id', params: { langPrefix: 'fr' } },
+        },
+      })
+    })
+
+    it('links a translated page with a param by its name', () => {
+      const extender = createExtender()
+      extender.extend([
+        {
+          name: 'product',
+          path: '/product/:id',
+          meta: { languageMapping: { de: '/produkt/:id' } },
+        },
+      ])
+      expect(extender.getLanguageLinks()).toEqual({
+        product: {
+          en: { name: 'product___en' },
+          de: { name: 'product___de' },
+        },
+      })
+    })
+
     it('links the mapped paths of a page with a mapping', () => {
       const extender = createExtender()
       extender.extend([
@@ -348,10 +405,7 @@ describe('PageExtender', () => {
       })
     })
 
-    // Known issue: the language links of a child page without a mapping, in a
-    // parent without a mapping, leave out the parent path
-    // (PageExtender.ts getFullPagePath(page.path, '')).
-    it.fails('links the full path of a nested page without a mapping', () => {
+    it('links the full path of a nested page without a mapping', () => {
       const extender = createExtender()
       extender.extend([
         {
