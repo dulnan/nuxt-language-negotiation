@@ -29,15 +29,19 @@ export type State = {
   language: string
   fullLanguage: { code: string; prefix: string; label: string }
   routeName: string | null
+  originalName: string | null
   routePath: string
   statusCode: number | null
   links: {
     code: string
     enabled: boolean
     active: boolean
+    to: string | Record<string, unknown> | null
     href: string | null
     resolveError: string | null
   }[]
+  paginationHref: string | null
+  languageChanges: string[]
   hydrated: boolean
 }
 
@@ -90,6 +94,27 @@ export function readState(html: string): State | null {
   }
   const json = match[1]!.replace(/&(quot|#39|lt|gt|amp);/g, (v) => ENTITIES[v]!)
   return JSON.parse(json)
+}
+
+/**
+ * Read the languages the search page fetched its data in, from the HTML.
+ */
+export function readFetchLanguages(html: string): string[] | null {
+  const match = /<pre data-testid="fetch-languages">([\s\S]*?)<\/pre>/.exec(
+    html,
+  )
+  return match
+    ? JSON.parse(
+        match[1]!.replace(/&(quot|#39|lt|gt|amp);/g, (v) => ENTITIES[v]!),
+      )
+    : null
+}
+
+/**
+ * Read the languages the search page fetched its data in, from the page.
+ */
+export async function readPageFetchLanguages(page: Page): Promise<string[]> {
+  return JSON.parse(await page.getByTestId('fetch-languages').innerText())
 }
 
 /**

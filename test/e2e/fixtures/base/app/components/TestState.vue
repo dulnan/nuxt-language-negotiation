@@ -55,6 +55,7 @@ const links = computed(() =>
       code: link.code,
       enabled: link.enabled,
       active: link.active,
+      to: link.to ?? null,
       href,
       path,
       resolveError,
@@ -62,14 +63,37 @@ const links = computed(() =>
   }),
 )
 
+// Like the pagination of apps that use the module: a link to the current
+// route by its name and params.
+const paginationHref = computed(() => {
+  if (!route.name) {
+    return null
+  }
+  try {
+    return router.resolve({
+      name: route.name,
+      params: route.params,
+      query: { ...route.query, page: '2' },
+    }).href
+  } catch (e) {
+    return `Error: ${e instanceof Error ? e.message : String(e)}`
+  }
+})
+
+// Set by the languageChanges plugin, on the client only.
+const languageChanges = useState<string[]>('test:languageChanges', () => [])
+
 const state = computed(() =>
   JSON.stringify({
     language: language.value,
     fullLanguage: fullLanguage.value,
     routeName: route.name ?? null,
+    originalName: route.meta.originalName ?? null,
     routePath: route.path,
     statusCode: props.statusCode ?? null,
     links: links.value.map(({ path: _, ...link }) => link),
+    paginationHref: paginationHref.value,
+    languageChanges: languageChanges.value,
     hydrated: hydrated.value,
   }),
 )

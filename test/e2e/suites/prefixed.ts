@@ -5,7 +5,9 @@ import {
   getJson,
   getState,
   openPage,
+  readFetchLanguages,
   readLinkHref,
+  readPageFetchLanguages,
   readPageState,
   request,
 } from '../helpers'
@@ -258,6 +260,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'de',
           enabled: true,
           active: true,
+          to: '/de/suchen',
           href: '/de/suchen',
           resolveError: null,
         },
@@ -265,6 +268,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'en',
           enabled: true,
           active: false,
+          to: '/en/search',
           href: '/en/search',
           resolveError: null,
         },
@@ -272,6 +276,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'fr',
           enabled: true,
           active: false,
+          to: '/fr/rechercher',
           href: '/fr/rechercher',
           resolveError: null,
         },
@@ -279,6 +284,7 @@ export function prefixedTests(nitro: NitroMajor) {
           code: 'gsw_CH',
           enabled: false,
           active: false,
+          to: null,
           href: null,
           resolveError: null,
         },
@@ -334,6 +340,77 @@ export function prefixedTests(nitro: NitroMajor) {
         ['gsw_CH', '/ch/about/team'],
       ])
     })
+
+    it('links the pages set in the state like vuepal does', async () => {
+      const state = await getState('/en/cms-page')
+      expect(state.links.map((v) => [v.code, v.to, v.active])).toEqual([
+        ['de', '/de/cms-seite', false],
+        ['en', '/en/cms-page', true],
+        ['fr', '/fr/page-cms', false],
+        ['gsw_CH', null, false],
+      ])
+    })
+
+    // Apps render the links as <a :href="link.to">.
+    it.each(['/de/suchen', '/fr', '/de/produkte', '/en/page-1'])(
+      'links the languages of %s by path',
+      async (path) => {
+        const state = await getState(path)
+        for (const link of state.links.filter((v) => v.enabled)) {
+          expect(link.to).toBe(link.href)
+        }
+      },
+    )
+  })
+
+  describe('route names', () => {
+    // Apps read the language from the route name, and link by
+    // meta.originalName.
+    it.each([
+      ['/fr/rechercher', 'search___fr', 'search'],
+      ['/ch/produkt/7', 'products-detail___gsw_CH', 'products-detail'],
+      ['/fr', 'index', 'index'],
+      ['/fr/node/5', 'node-id', 'node-id'],
+    ])('names the route of %s %s', async (path, routeName, originalName) => {
+      const state = await getState(path)
+      expect(state.routeName).toBe(routeName)
+      expect(state.originalName).toBe(originalName)
+    })
+  })
+
+  describe('links by the current route', () => {
+    // Like a pagination: { name: route.name, params: route.params, query }.
+    it.each([
+      ['/fr/rechercher', '/fr/rechercher?page=2'],
+      ['/fr', '/fr?page=2'],
+      ['/ch/produkt/7', '/ch/produkt/7?page=2'],
+      ['/en/node/5', '/en/node/5?page=2'],
+      ['/en/page-1', '/en/page-1?page=2'],
+    ])('links %s to %s', async (path, href) => {
+      expect((await getState(path)).paginationHref).toBe(href)
+    })
+  })
+
+  describe('server code', () => {
+    it('imports the config', async () => {
+      expect(await getJson('/api/config')).toEqual({
+        defaultLangcode: 'de',
+        langcodes: ['de', 'en', 'fr', 'gsw_CH'],
+      })
+    })
+  })
+
+  describe('data fetching', () => {
+    it.each([
+      ['/fr/rechercher', {}, 'fr'],
+      ['/de/suchen', { headers: { 'x-force-language': 'en' } }, 'en'],
+    ])(
+      'fetches the data of %s in the page language',
+      async (path, options, language) => {
+        const response = await request(path, options)
+        expect(readFetchLanguages(response.body)).toEqual([language, language])
+      },
+    )
   })
 
   describe('browser', () => {
@@ -470,6 +547,46 @@ export function prefixedTests(nitro: NitroMajor) {
       await expect
         .poll(async () => (await readPageState(page)).language)
         .toBe('en')
+      await page.close()
+    })
+
+    it('fetches the data of the next page in its language', async () => {
+      const { page, messages } = await openPage('/de/suchen')
+      expect(await readPageFetchLanguages(page)).toEqual(['de', 'de'])
+      await page.getByTestId('lang-fr').click()
+      await page.waitForURL('**/fr/rechercher')
+      await expect
+        .poll(() => readPageFetchLanguages(page))
+        .toEqual(['fr', 'fr'])
+      expect(messages).toEqual([])
+      await page.close()
+    })
+
+    it('changes the language once per language switch', async () => {
+      const { page } = await openPage('/de/suchen')
+      expect((await readPageState(page)).languageChanges).toEqual([])
+
+      await page.getByTestId('lang-fr').click()
+      await page.waitForURL('**/fr/rechercher')
+      await expect
+        .poll(async () => (await readPageState(page)).languageChanges)
+        .toEqual(['fr'])
+
+      // Within the same language.
+      await page.evaluate(() =>
+        (window as any).useNuxtApp().$router.push('/fr/produits/7'),
+      )
+      await page.waitForURL('**/fr/produits/7')
+      await expect
+        .poll(async () => (await readPageState(page)).routePath)
+        .toBe('/fr/produits/7')
+      expect((await readPageState(page)).languageChanges).toEqual(['fr'])
+
+      await page.getByTestId('lang-en').click()
+      await page.waitForURL('**/en/products/7')
+      await expect
+        .poll(async () => (await readPageState(page)).languageChanges)
+        .toEqual(['fr', 'en'])
       await page.close()
     })
 
