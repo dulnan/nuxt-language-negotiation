@@ -23,6 +23,7 @@ import {
   langcodeToPrefix,
 } from '#nuxt-language-negotiation/config'
 import { getLanguageFromPath, LANGUAGE_STATE_KEY } from '../../helpers'
+import { getRouteLanguages } from '../helpers/routeLanguages'
 
 /**
  * Replaces methods on the vue-router instance to handle translated routes.
@@ -34,22 +35,27 @@ export default defineNuxtPlugin({
     const router = useRouter()
     const currentLanguage = useCurrentLanguage()
 
-    // Set the current language after client-side navigation. During
-    // hydration, it stays the language the server negotiated.
+    // Record the language of each route after client-side navigation. The
+    // first page has the language the server negotiated.
     if (import.meta.client) {
-      const language = useState<Langcode>(LANGUAGE_STATE_KEY)
-      router.afterEach((to, _from, failure) => {
+      const negotiated = useState<Langcode>(LANGUAGE_STATE_KEY)
+      const routeLanguages = getRouteLanguages(nuxtApp)
+      router.afterEach((to, from, failure) => {
         if (failure || nuxtApp.isHydrating) {
           return
         }
         const fromPath = getLanguageFromPath(to.path) as Langcode | undefined
         if (fromPath) {
-          language.value = fromPath
+          routeLanguages.set(to.fullPath, fromPath)
         } else if (defaultLanguageNoPrefix) {
-          language.value = defaultLangcode
+          routeLanguages.set(to.fullPath, defaultLangcode)
+        } else {
+          // A path without a prefix keeps the language of the previous page.
+          routeLanguages.set(
+            to.fullPath,
+            routeLanguages.get(from.fullPath) ?? negotiated.value,
+          )
         }
-        // Otherwise, a path without a prefix keeps the language of the
-        // previous page.
       })
     }
 

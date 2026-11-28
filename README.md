@@ -340,6 +340,9 @@ A language without a path gets a disabled link.
 - **Navigation:** after client-side navigation, the language comes from the path
   prefix. On a path without a prefix, it's the default language if the default
   language has no prefix. Otherwise the language of the previous page stays.
+- **Timing:** like `useRoute()`, a page keeps its language until it's replaced.
+  Outside of pages, like in layouts, `app.vue` or plugins, the language changes
+  once the next page has loaded.
 - **Without SSR (`ssr: false`):** the language comes from the path prefix, or is
   the default language.
 

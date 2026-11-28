@@ -118,6 +118,29 @@ export async function readPageFetchLanguages(page: Page): Promise<string[]> {
 }
 
 /**
+ * Read the language the slow page renders, from the page.
+ */
+export async function readSlowPageLanguage(page: Page): Promise<string> {
+  return page.getByTestId('page-language').innerText()
+}
+
+/**
+ * Wait until the slow page has started loading after client-side navigation.
+ */
+export async function waitForSlowPage(page: Page) {
+  await page.waitForFunction(
+    () => typeof (window as any).releaseSlowPage === 'function',
+  )
+}
+
+/**
+ * Let the slow page finish loading.
+ */
+export async function releaseSlowPage(page: Page) {
+  await page.evaluate(() => (window as any).releaseSlowPage())
+}
+
+/**
  * Read the href of the link with the given data-testid from the HTML.
  */
 export function readLinkHref(html: string, testId: string): string | null {

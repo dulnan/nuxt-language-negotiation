@@ -9,6 +9,9 @@ import {
   readLinkHref,
   readPageFetchLanguages,
   readPageState,
+  readSlowPageLanguage,
+  releaseSlowPage,
+  waitForSlowPage,
   request,
 } from '../helpers'
 
@@ -587,6 +590,29 @@ export function prefixedTests(nitro: NitroMajor) {
       await expect
         .poll(async () => (await readPageState(page)).languageChanges)
         .toEqual(['fr', 'en'])
+      await page.close()
+    })
+
+    it('keeps the language of a page until the next page is shown', async () => {
+      const { page, messages } = await openPage('/de/slow')
+      await page.getByTestId('lang-fr').click()
+      await page.waitForURL('**/fr/slow')
+      await waitForSlowPage(page)
+
+      // While the next page loads, the previous page and everything outside
+      // of the page stay in the previous language.
+      expect(await readSlowPageLanguage(page)).toBe('de')
+      const loading = await readPageState(page)
+      expect(loading.language).toBe('de')
+      expect(loading.languageChanges).toEqual([])
+
+      await releaseSlowPage(page)
+      await expect.poll(() => readSlowPageLanguage(page)).toBe('fr')
+      await expect
+        .poll(async () => (await readPageState(page)).languageChanges)
+        .toEqual(['fr'])
+      expect((await readPageState(page)).language).toBe('fr')
+      expect(messages).toEqual([])
       await page.close()
     })
 
