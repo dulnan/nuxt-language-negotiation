@@ -23,12 +23,11 @@ import type {
  * Returns the language links for the current route.
  */
 export function useLanguageLinks(): ComputedRef<LanguageLink[]> {
-  const stateLinks = useState<Record<string, Record<Langcode, string>>>(
-    'pageLanguageLinks',
-    () => {
-      return {}
-    },
-  )
+  const stateLinks = useState<
+    Record<string, Partial<Record<Langcode, string>>>
+  >('pageLanguageLinks', () => {
+    return {}
+  })
 
   const currentLanguage = useCurrentLanguage()
   const route = useRoute()
